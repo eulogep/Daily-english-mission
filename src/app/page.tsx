@@ -44,8 +44,8 @@ export default function TodayPage() {
         <CardContent className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-7">
           <div className="space-y-3">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300"><Sparkles className="size-4" aria-hidden="true" />Progression</p>
-            <h2 className="text-xl font-semibold">La fondation est prête. La première preuve reste à produire.</h2>
-            <p className="max-w-2xl text-sm leading-6 text-slate-300">La progression sera reliée à des preuves réelles. Aucun score artificiel n’est affiché avant le moteur de compétences.</p>
+            <h2 className="text-xl font-semibold">Ta progression reste reliée à des preuves réelles.</h2>
+            <p className="max-w-2xl text-sm leading-6 text-slate-300">Consulte le statut de ta compétence Excel et les travaux qui le justifient, sans score artificiel.</p>
           </div>
           <Button asChild variant="secondary"><Link href="/progress">Comprendre la progression</Link></Button>
         </CardContent>

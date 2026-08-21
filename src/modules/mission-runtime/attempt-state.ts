@@ -3,9 +3,10 @@ import type { MissionAttempt, MissionDefinition, MissionEvent } from "./types";
 const eventAt = (type: MissionEvent["type"], at: number): MissionEvent => ({ type, at });
 export const MAX_PLAUSIBLE_LEGACY_ACTIVE_MS = 6 * 60 * 60 * 1000;
 
-export function createMissionAttempt(mission: MissionDefinition, at = Date.now()): MissionAttempt {
+export function createMissionAttempt(mission: MissionDefinition, at = Date.now(), attemptId?: string): MissionAttempt {
+  const uniqueId = attemptId ?? `${mission.slug}-${at}-${globalThis.crypto.randomUUID()}`;
   return {
-    id: `${mission.slug}-attempt`,
+    id: uniqueId,
     createdAt: at,
     missionId: mission.id,
     missionVersion: mission.version,
