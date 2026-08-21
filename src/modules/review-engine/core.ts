@@ -1,0 +1,254 @@
+import type { EvidenceRecord } from "../learning-records/types";
+import type { MissionAttempt } from "../mission-runtime/types";
+import type { ErrorPattern, ErrorSignal, ReviewConcept, ReviewItem, ReviewResultRecord } from "./types";
+
+export const MINUTE_MS = 60 * 1000;
+export const DAY_MS = 24 * 60 * MINUTE_MS;
+export const REVIEW_POLICY_VERSION = 1;
+
+function unique(values: string[]) {
+  return [...new Set(values)];
+}
+
+function signal(attempt: MissionAttempt, sourceEvidenceId: string, errorType: ErrorSignal["errorType"], concept: ReviewConcept, description: string, severity: ErrorSignal["severity"], observedAt: number): ErrorSignal {
+  return {
+    id: `${attempt.id}:${errorType}:${concept}`,
+    competencyId: "EXCEL_CSV_IMPORT",
+    sourceEvidenceId,
+    missionId: attempt.missionId,
+    attemptId: attempt.id,
+    errorType,
+    concept,
+    description,
+    observedAt,
+    severity,
+  };
+}
+
+export function detectExcelErrorSignals(attempt: MissionAttempt, availableEvidenceIds: string[]): ErrorSignal[] {
+  if (attempt.startedAt === null) return [];
+  const sourceEvidenceId = `${attempt.id}:MISSION_ATTEMPT`;
+  if (!availableEvidenceIds.includes(sourceEvidenceId)) return [];
+  const signals: ErrorSignal[] = [];
+  const incorrect = attempt.events.filter((event) => event.type === "ANSWER_INCORRECT");
+  const strongHints = attempt.events.filter((event) => event.type === "HINT_USED" && (event.value ?? 0) >= 3);
+  const retriesByStep = attempt.events.filter((event) => event.type === "RETRY").reduce<Record<string, number>>((counts, event) => {
+    const stepId = event.stepId ?? "unknown";
+    counts[stepId] = (counts[stepId] ?? 0) + 1;
+    return counts;
+  }, {});
+
+  if (incorrect.some((event) => event.stepId === "check-columns")) {
+    signals.push(signal(attempt, sourceEvidenceId, "PROCEDURAL_ERROR", "CSV_DELIMITER_DIAGNOSIS", "Le diagnostic du délimiteur a nécessité une correction.", "MEDIUM", incorrect.find((event) => event.stepId === "check-columns")!.at));
+  }
+  if (incorrect.some((event) => event.stepId === "find-anomaly")) {
+    signals.push(signal(attempt, sourceEvidenceId, "DATA_INSPECTION_ERROR", "ENERGY_MISSING_VALUE_INSPECTION", "La valeur d’énergie manquante n’a pas été identifiée au premier essai.", "MEDIUM", incorrect.find((event) => event.stepId === "find-anomaly")!.at));
+  }
+  for (const event of strongHints) {
+    const concept = event.stepId === "find-anomaly" ? "ENERGY_MISSING_VALUE_INSPECTION" : "CSV_DELIMITER_DIAGNOSIS";
+    signals.push(signal(attempt, sourceEvidenceId, "HINT_DEPENDENCE", concept, "Un indice très explicite a été nécessaire pour réussir cette étape.", "LOW", event.at));
+  }
+  for (const [stepId, retryCount] of Object.entries(retriesByStep)) {
+    if (retryCount < 2) continue;
+    const concept = stepId === "find-anomaly" ? "ENERGY_MISSING_VALUE_INSPECTION" : "CSV_DELIMITER_DIAGNOSIS";
+    signals.push(signal(attempt, sourceEvidenceId, "RETRY_DEPENDENCE", concept, "Plusieurs nouvelles tentatives ont été nécessaires sur cette notion.", "MEDIUM", attempt.events.filter((event) => event.type === "RETRY" && event.stepId === stepId).at(-1)!.at));
+  }
+  const confidence = Number(attempt.responses["self-evaluation"]);
+  if (attempt.status === "COMPLETED" && Number.isFinite(confidence) && confidence <= 2) {
+    signals.push(signal(attempt, sourceEvidenceId, "LOW_CONFIDENCE", "CSV_DELIMITER_DIAGNOSIS", "La réussite est accompagnée d’une confiance déclarée faible.", "LOW", attempt.completedAt ?? attempt.startedAt));
+  }
+  return signals;
+}
+
+export function mergeErrorPatterns(existing: ErrorPattern[], signals: ErrorSignal[]): ErrorPattern[] {
+  const byId = new Map(existing.map((pattern) => [pattern.id, pattern]));
+  for (const current of signals) {
+    const id = `error:${current.competencyId}:${current.errorType}:${current.concept}`;
+    const prior = byId.get(id);
+    if (!prior) {
+      byId.set(id, {
+        id,
+        competencyId: current.competencyId,
+        sourceEvidenceIds: [current.sourceEvidenceId],
+        missionId: current.missionId,
+        attemptIds: [current.attemptId],
+        errorType: current.errorType,
+        concept: current.concept,
+        description: current.description,
+        firstObservedAt: current.observedAt,
+        lastObservedAt: current.observedAt,
+        occurrenceCount: 1,
+        severity: current.severity,
+        resolvedStatus: "ACTIVE",
+        latestReviewResult: null,
+        metadata: { observedSignalIds: [current.id], successfulReviewCount: 0 },
+        sourceClassification: "PERSONAL",
+      });
+      continue;
+    }
+    if (prior.metadata.observedSignalIds.includes(current.id)) continue;
+    const occurrenceCount = prior.occurrenceCount + 1;
+    byId.set(id, {
+      ...prior,
+      sourceEvidenceIds: unique([...prior.sourceEvidenceIds, current.sourceEvidenceId]),
+      attemptIds: unique([...prior.attemptIds, current.attemptId]),
+      lastObservedAt: Math.max(prior.lastObservedAt, current.observedAt),
+      occurrenceCount,
+      severity: occurrenceCount >= 2 ? "HIGH" : prior.severity,
+      resolvedStatus: "ACTIVE",
+      metadata: { ...prior.metadata, observedSignalIds: [...prior.metadata.observedSignalIds, current.id] },
+    });
+  }
+  return [...byId.values()].sort((left, right) => left.firstObservedAt - right.firstObservedAt);
+}
+
+function template(concept: ReviewConcept) {
+  if (concept === "ENERGY_MISSING_VALUE_INSPECTION") {
+    return {
+      reviewType: "SHORT_TEXT" as const,
+      title: "Inspection d’une valeur d’énergie",
+      prompt: "Dans un tableau de production, une mesure d’énergie semble incomplète. Quelle colonne inspectes-tu en priorité ?",
+      expectedResponse: "Energy_kWh",
+      acceptedKeywords: ["energy_kwh", "energy kwh", "énergie", "energie"],
+      hint: "Cherche la colonne qui porte directement la mesure d’énergie.",
+      successFeedback: "Exact. Inspecter Energy_kWh permet de repérer une mesure absente avant tout calcul.",
+      retryFeedback: "Ce n’est pas encore la colonne la plus directe. Repère celle qui contient les valeurs d’énergie.",
+    };
+  }
+  return {
+    reviewType: "MULTIPLE_CHOICE" as const,
+    title: "Diagnostic du délimiteur",
+    prompt: "Un nouveau CSV s’ouvre dans une seule colonne dans Excel. Quelle est la première chose à vérifier ?",
+    choices: [
+      { id: "delimiter", label: "Le délimiteur choisi pendant l’import" },
+      { id: "alignment", label: "L’alignement horizontal des cellules" },
+      { id: "font", label: "La police utilisée dans le classeur" },
+    ],
+    expectedResponse: "delimiter",
+    acceptedKeywords: ["délimiteur", "delimiteur", "virgule", "separator", "séparateur", "separateur"],
+    hint: "Pense au caractère qui sépare les champs dans le fichier brut.",
+    successFeedback: "Exact. Le délimiteur est le premier contrôle quand toutes les données restent dans une colonne.",
+    retryFeedback: "Cette action ne corrige pas la séparation des champs. Réessaie en pensant à l’import du fichier.",
+  };
+}
+
+export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPattern[], now: number): ReviewItem[] {
+  const byId = new Map(existing.map((item) => [item.id, item]));
+  const byConcept = new Map<ReviewConcept, ErrorPattern[]>();
+  patterns.filter((pattern) => pattern.resolvedStatus !== "RESOLVED").forEach((pattern) => byConcept.set(pattern.concept, [...(byConcept.get(pattern.concept) ?? []), pattern]));
+  for (const [concept, conceptPatterns] of byConcept) {
+    const id = `review:EXCEL_CSV_IMPORT:${concept}`;
+    const prior = byId.get(id);
+    const sourceEvidenceIds = unique(conceptPatterns.flatMap((pattern) => pattern.sourceEvidenceIds));
+    const errorPatternIds = conceptPatterns.map((pattern) => pattern.id);
+    if (!prior) {
+      const content = template(concept);
+      byId.set(id, {
+        id,
+        competencyId: "EXCEL_CSV_IMPORT",
+        errorPatternIds,
+        sourceEvidenceIds,
+        missionId: conceptPatterns[0].missionId,
+        concept,
+        ...content,
+        createdAt: now,
+        dueAt: now,
+        intervalMinutes: 0,
+        status: "DUE",
+        attemptCount: 0,
+        successCount: 0,
+        lastReviewedAt: null,
+        nextReviewAt: now,
+        whyDue: "À revoir maintenant car une difficulté a été observée dans ta mission Excel.",
+        sourceClassification: "PERSONAL",
+      });
+      continue;
+    }
+    const hasNewSource = sourceEvidenceIds.some((sourceId) => !prior.sourceEvidenceIds.includes(sourceId));
+    byId.set(id, {
+      ...prior,
+      errorPatternIds: unique([...prior.errorPatternIds, ...errorPatternIds]),
+      sourceEvidenceIds: unique([...prior.sourceEvidenceIds, ...sourceEvidenceIds]),
+      ...(hasNewSource ? { dueAt: Math.min(prior.dueAt, now), nextReviewAt: Math.min(prior.nextReviewAt, now), status: "DUE" as const, whyDue: "À revoir maintenant car une nouvelle difficulté a été observée." } : {}),
+    });
+  }
+  return [...byId.values()].sort((left, right) => left.dueAt - right.dueAt);
+}
+
+export function reviewStatusAt(item: ReviewItem, now: number): ReviewItem["status"] {
+  if (item.status === "SUSPENDED") return "SUSPENDED";
+  return item.dueAt <= now ? "DUE" : "UPCOMING";
+}
+
+export function evaluateReviewResponse(item: ReviewItem, response: string) {
+  const normalized = response.trim().toLocaleLowerCase("fr-FR");
+  if (!normalized) return false;
+  if (item.reviewType === "MULTIPLE_CHOICE") return normalized === item.expectedResponse.toLocaleLowerCase("fr-FR");
+  return (item.acceptedKeywords ?? [item.expectedResponse]).some((keyword) => normalized.includes(keyword.toLocaleLowerCase("fr-FR")));
+}
+
+export function reviewIsTraceable(item: ReviewItem, patterns: ErrorPattern[], evidence: EvidenceRecord[]) {
+  const patternIds = new Set(patterns.map((pattern) => pattern.id));
+  const evidenceIds = new Set(evidence.map((record) => record.id));
+  const linkedPatterns = patterns.filter((pattern) => item.errorPatternIds.includes(pattern.id));
+  return item.errorPatternIds.length > 0
+    && item.sourceEvidenceIds.length > 0
+    && item.errorPatternIds.every((id) => patternIds.has(id))
+    && item.sourceEvidenceIds.every((id) => evidenceIds.has(id))
+    && linkedPatterns.every((pattern) => pattern.sourceEvidenceIds.length > 0 && pattern.sourceEvidenceIds.every((id) => evidenceIds.has(id)));
+}
+
+export function countDueReviews(items: ReviewItem[], patterns: ErrorPattern[], evidence: EvidenceRecord[], now: number) {
+  return items.filter((item) => reviewStatusAt(item, now) === "DUE" && reviewIsTraceable(item, patterns, evidence)).length;
+}
+
+export function applyReviewResult(item: ReviewItem, patterns: ErrorPattern[], result: ReviewResultRecord) {
+  const successCount = item.successCount + (result.correct ? 1 : 0);
+  const intervalMinutes = result.correct ? (successCount === 1 ? 3 * 24 * 60 : successCount === 2 ? 7 * 24 * 60 : 14 * 24 * 60) : 10;
+  const nextReviewAt = result.completedAt + intervalMinutes * MINUTE_MS;
+  const reviewItem: ReviewItem = {
+    ...item,
+    attemptCount: item.attemptCount + 1,
+    successCount,
+    lastReviewedAt: result.completedAt,
+    dueAt: nextReviewAt,
+    nextReviewAt,
+    intervalMinutes,
+    status: "UPCOMING",
+    whyDue: result.correct
+      ? `Prochaine vérification dans ${intervalMinutes / (24 * 60)} jour(s) après une réponse correcte.`
+      : "À revoir bientôt car la dernière réponse n’était pas encore correcte.",
+  };
+  const errorPatterns = patterns.map((pattern) => {
+    if (!item.errorPatternIds.includes(pattern.id)) return pattern;
+    const successfulReviewCount = (pattern.metadata.successfulReviewCount ?? 0) + (result.correct ? 1 : 0);
+    return { ...pattern, latestReviewResult: result.correct ? "CORRECT" as const : "INCORRECT" as const, resolvedStatus: result.correct ? (successfulReviewCount >= 3 ? "RESOLVED" as const : "IMPROVING" as const) : "ACTIVE" as const, metadata: { ...pattern.metadata, successfulReviewCount } };
+  });
+  return { reviewItem, errorPatterns };
+}
+
+export function reviewEvidenceFromResult(item: ReviewItem, result: ReviewResultRecord): EvidenceRecord {
+  const delimiter = item.concept === "CSV_DELIMITER_DIAGNOSIS";
+  return {
+    id: `${item.id}:result:${item.attemptCount + 1}`,
+    attemptId: result.id,
+    missionId: item.missionId,
+    missionVersion: REVIEW_POLICY_VERSION,
+    competencyIds: [item.competencyId],
+    createdAt: result.completedAt,
+    evidenceType: "REVIEW_RESULT",
+    artifactReference: null,
+    learnerResponses: { reviewResponse: result.response },
+    evaluationResult: {
+      outcome: result.correct ? "REVIEW_SUCCESS" : "REVIEW_FAILURE",
+      delimiterDiagnostic: delimiter ? (result.correct ? "VALID" : "INVALID") : "PENDING",
+      anomalyIdentification: delimiter ? "PENDING" : (result.correct ? "VALID" : "INVALID"),
+      missionCompletion: "PENDING",
+    },
+    assistance: { hintCount: result.hintCount, retryCount: result.retryCount },
+    selfEvaluation: result.confidence,
+    sourceClassification: "PERSONAL",
+    verificationStatus: "VALID",
+    relatedEvidenceIds: item.sourceEvidenceIds,
+  };
+}

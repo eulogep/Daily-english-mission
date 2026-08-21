@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import { BarChart3, BookOpenCheck, CalendarDays, FileCheck2, GraduationCap, Languages, LibraryBig, RotateCcw, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LearningRecordBridge } from "@/components/learning-records/LearningRecordBridge";
+import { ReviewRecordBridge } from "@/components/review-engine/ReviewRecordBridge";
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
 const navItems: NavItem[] = [
@@ -52,6 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#f4f6f2] text-slate-950">
       <LearningRecordBridge />
+      <ReviewRecordBridge />
       <a href="#main-content" className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-emerald-950 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-transform focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2">Aller au contenu</a>
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 border-r border-slate-200/80 bg-white px-4 py-5 md:flex md:flex-col lg:w-64 lg:px-5">

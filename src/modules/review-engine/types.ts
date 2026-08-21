@@ -1,0 +1,121 @@
+import type { CompetencyId } from "../learning-records/types";
+
+export type ErrorType =
+  | "PROCEDURAL_ERROR"
+  | "DATA_INSPECTION_ERROR"
+  | "HINT_DEPENDENCE"
+  | "RETRY_DEPENDENCE"
+  | "LOW_CONFIDENCE";
+
+export type ReviewConcept = "CSV_DELIMITER_DIAGNOSIS" | "ENERGY_MISSING_VALUE_INSPECTION";
+export type ErrorSeverity = "LOW" | "MEDIUM" | "HIGH";
+export type ErrorResolutionStatus = "ACTIVE" | "IMPROVING" | "RESOLVED";
+export type ReviewStatus = "DUE" | "UPCOMING" | "COMPLETED" | "SUSPENDED";
+export type ReviewType = "MULTIPLE_CHOICE" | "SHORT_TEXT" | "QUICK_DIAGNOSTIC" | "CONFIDENCE_RESPONSE";
+
+export type ErrorSignal = {
+  id: string;
+  competencyId: CompetencyId;
+  sourceEvidenceId: string;
+  missionId: string;
+  attemptId: string;
+  errorType: ErrorType;
+  concept: ReviewConcept;
+  description: string;
+  observedAt: number;
+  severity: ErrorSeverity;
+};
+
+export type ErrorPattern = {
+  id: string;
+  competencyId: CompetencyId;
+  sourceEvidenceIds: string[];
+  missionId: string;
+  attemptIds: string[];
+  errorType: ErrorType;
+  concept: ReviewConcept;
+  description: string;
+  firstObservedAt: number;
+  lastObservedAt: number;
+  occurrenceCount: number;
+  severity: ErrorSeverity;
+  resolvedStatus: ErrorResolutionStatus;
+  latestReviewResult: "CORRECT" | "INCORRECT" | null;
+  metadata: { observedSignalIds: string[]; successfulReviewCount: number };
+  sourceClassification: "PERSONAL";
+};
+
+export type ReviewChoice = { id: string; label: string };
+
+export type ReviewItem = {
+  id: string;
+  competencyId: CompetencyId;
+  errorPatternIds: string[];
+  sourceEvidenceIds: string[];
+  missionId: string;
+  concept: ReviewConcept;
+  reviewType: ReviewType;
+  title: string;
+  prompt: string;
+  choices?: ReviewChoice[];
+  expectedResponse: string;
+  acceptedKeywords?: string[];
+  hint: string;
+  successFeedback: string;
+  retryFeedback: string;
+  createdAt: number;
+  dueAt: number;
+  intervalMinutes: number;
+  status: ReviewStatus;
+  attemptCount: number;
+  successCount: number;
+  lastReviewedAt: number | null;
+  nextReviewAt: number;
+  whyDue: string;
+  sourceClassification: "PERSONAL";
+};
+
+export type ReviewResultRecord = {
+  id: string;
+  reviewItemId: string;
+  competencyId: CompetencyId;
+  sourceEvidenceIds: string[];
+  correct: boolean;
+  response: string;
+  hintCount: number;
+  retryCount: number;
+  confidence: number | null;
+  durationMs: number | null;
+  completedAt: number;
+  sourceClassification: "PERSONAL";
+};
+
+export type ReviewEventType =
+  | "ERROR_PATTERN_CREATED"
+  | "ERROR_PATTERN_UPDATED"
+  | "REVIEW_ITEM_CREATED"
+  | "REVIEW_STARTED"
+  | "REVIEW_ANSWER_SUBMITTED"
+  | "REVIEW_COMPLETED"
+  | "REVIEW_FAILED"
+  | "REVIEW_RESCHEDULED"
+  | "ERROR_PATTERN_IMPROVING"
+  | "ERROR_PATTERN_RESOLVED";
+
+export type ReviewEvent = {
+  id: string;
+  type: ReviewEventType;
+  at: number;
+  errorPatternId?: string;
+  reviewItemId?: string;
+};
+
+export interface ErrorPatternRepository {
+  list(): ErrorPattern[];
+  replace(patterns: ErrorPattern[]): void;
+}
+
+export interface ReviewRepository {
+  list(): ReviewItem[];
+  replace(items: ReviewItem[]): void;
+}

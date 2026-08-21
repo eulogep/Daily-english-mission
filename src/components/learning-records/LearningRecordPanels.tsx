@@ -17,6 +17,8 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
   const [open, setOpen] = useState(false);
   const viewed = useLearningRecordStore((state) => state.recordEvidenceViewed);
   const completed = record.evidenceType === "MISSION_COMPLETION";
+  const reviewResult = record.evidenceType === "REVIEW_RESULT";
+  const reviewCorrect = record.evaluationResult.outcome === "REVIEW_SUCCESS";
   const toggle = () => {
     const next = !open;
     setOpen(next);
@@ -25,20 +27,20 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
   return (
     <Card className="border-slate-200 bg-white shadow-sm">
       <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Excel CSV Foundations — Niveau 1</p><CardTitle className="mt-2 text-xl">{completed ? "Mission terminée" : "Tentative en cours"}</CardTitle><p className="mt-1 text-sm text-slate-500">{dateLabel(record.createdAt)}</p></div>
-        <Badge variant={completed ? "default" : "outline"}>{completed ? "Preuve guidée valide" : "Mission commencée"}</Badge>
+        <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">{reviewResult ? "Révision Excel — Import CSV" : "Excel CSV Foundations — Niveau 1"}</p><CardTitle className="mt-2 text-xl">{reviewResult ? "Révision terminée" : completed ? "Mission terminée" : "Tentative en cours"}</CardTitle><p className="mt-1 text-sm text-slate-500">{dateLabel(record.createdAt)}</p></div>
+        <Badge variant={completed || reviewCorrect ? "default" : "outline"}>{reviewResult ? (reviewCorrect ? "Réponse correcte" : "À renforcer") : completed ? "Preuve guidée valide" : "Mission commencée"}</Badge>
       </CardHeader>
       <CardContent className="space-y-5">
         <div><p className="text-sm font-semibold">Compétence</p><p className="mt-1 text-sm text-slate-600">Import CSV dans Excel</p></div>
-        <ul className="space-y-2 text-sm text-slate-700">
+        {reviewResult ? <ul className="space-y-2 text-sm text-slate-700"><li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />Tentative de récupération active enregistrée</li><li className="flex gap-2">{reviewCorrect ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden="true" />}{reviewCorrect ? "Réponse déterministe correcte" : "Notion planifiée à revoir bientôt"}</li><li className="flex gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />Reliée aux preuves de la mission d’origine</li></ul> : <ul className="space-y-2 text-sm text-slate-700">
           <li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />{completed ? "Mission terminée" : "Mission démarrée"}</li>
           <li className="flex gap-2">{record.evaluationResult.anomalyIdentification === "VALID" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />}Anomalie correctement identifiée</li>
           <li className="flex gap-2">{record.artifactReference ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />}Artefact local enregistré</li>
           {record.artifactReference && <li className="flex gap-2 text-amber-800"><Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />Contenu de l’artefact non vérifié indépendamment</li>}
-        </ul>
+        </ul>}
         <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm"><span className="font-semibold">Aide :</span> {record.assistance.hintCount} indice(s), {record.assistance.retryCount} nouvelle(s) tentative(s){record.selfEvaluation !== null ? ` · confiance déclarée ${record.selfEvaluation}/5` : ""}</div>
         <Button variant="outline" onClick={toggle}>{open ? "Masquer les détails" : "Voir la preuve"}</Button>
-        {open && <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600"><p><strong>Référence locale :</strong> {record.artifactReference?.displayName ?? "Aucun artefact"}</p><p className="mt-2"><strong>Vérification déterministe :</strong> {record.verificationStatus === "VALID" ? "valide" : record.verificationStatus.toLowerCase()}</p><p className="mt-2 text-xs">Identifiant opaque : {record.id}</p></div>}
+        {open && <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">{reviewResult ? <p><strong>Sources liées :</strong> {record.relatedEvidenceIds?.length ?? 0} preuve(s) d’origine</p> : <p><strong>Référence locale :</strong> {record.artifactReference?.displayName ?? "Aucun artefact"}</p>}<p className="mt-2"><strong>Vérification déterministe :</strong> {record.verificationStatus === "VALID" ? "valide" : record.verificationStatus.toLowerCase()}</p><p className="mt-2 text-xs">Identifiant opaque : {record.id}</p></div>}
       </CardContent>
     </Card>
   );

@@ -10,7 +10,7 @@ export const COMPETENCY_STATUSES = [
 export type CompetencyStatus = (typeof COMPETENCY_STATUSES)[number];
 export type CompetencyId = "EXCEL_CSV_IMPORT";
 export type VerificationStatus = "PENDING" | "VALID" | "INVALID" | "UNVERIFIED";
-export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION";
+export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT";
 
 export const COMPETENCY_SEMANTICS: Record<CompetencyStatus, string> = {
   NOT_SEEN: "Aucune preuve significative.",
@@ -40,7 +40,7 @@ export type ArtifactReference = {
 };
 
 export type EvidenceEvaluation = {
-  outcome: "ENCOUNTERED" | "INCOMPLETE" | "SUCCESSFUL_GUIDED";
+  outcome: "ENCOUNTERED" | "INCOMPLETE" | "SUCCESSFUL_GUIDED" | "REVIEW_SUCCESS" | "REVIEW_FAILURE";
   delimiterDiagnostic: VerificationStatus;
   anomalyIdentification: VerificationStatus;
   missionCompletion: VerificationStatus;
@@ -64,6 +64,7 @@ export type EvidenceRecord = {
   selfEvaluation: number | null;
   sourceClassification: "PERSONAL";
   verificationStatus: VerificationStatus;
+  relatedEvidenceIds?: string[];
 };
 
 export type CompetencyRecord = {

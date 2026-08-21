@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { MissionAttempt, MissionDefinition } from "@/modules/mission-runtime/types";
-import { rebuildCompetencies, reconcileExcelAttempt } from "./core";
+import { rebuildCompetencies, reconcileExcelAttempt, upsertEvidence } from "./core";
 import type { CompetencyId, CompetencyRecord, EvidenceRecord, LearningRecordEvent, LearningRecordEventType } from "./types";
 
 type LearningRecordState = {
@@ -13,6 +13,7 @@ type LearningRecordState = {
   events: LearningRecordEvent[];
   markHydrated: () => void;
   syncExcelAttempt: (attempt: MissionAttempt, mission: MissionDefinition) => void;
+  addEvidenceRecords: (records: EvidenceRecord[]) => void;
   removeEvidence: (evidenceId: string) => void;
   recordEvidenceViewed: (evidenceId: string) => void;
   recordCompetencyExplanationViewed: (competencyId: CompetencyId) => void;
@@ -46,6 +47,22 @@ export const useLearningRecordStore = create<LearningRecordState>()(
             ...state.events,
             ...created.map((record) => event("EVIDENCE_CREATED", { evidenceId: record.id })),
             ...(competencyChanged ? [event("COMPETENCY_STATE_UPDATED", { competencyId: "EXCEL_CSV_IMPORT" })] : []),
+          ],
+        };
+      }),
+      addEvidenceRecords: (records) => set((state) => {
+        const previousIds = new Set(state.evidence.map((record) => record.id));
+        const evidence = upsertEvidence(state.evidence, records);
+        const created = evidence.filter((record) => !previousIds.has(record.id));
+        if (created.length === 0) return state;
+        const competencies = rebuildCompetencies(evidence);
+        return {
+          evidence,
+          competencies,
+          events: [
+            ...state.events,
+            ...created.map((record) => event("EVIDENCE_CREATED", { evidenceId: record.id })),
+            ...competencies.map((record) => event("COMPETENCY_STATE_UPDATED", { competencyId: record.competencyId })),
           ],
         };
       }),

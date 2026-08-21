@@ -81,6 +81,8 @@ export function evidenceFromExcelAttempt(attempt: MissionAttempt, mission: Missi
 function supportedStatus(evidence: EvidenceRecord): CompetencyStatus {
   if (evidence.verificationStatus === "INVALID") return "NOT_SEEN";
   if (evidence.evaluationResult.outcome === "SUCCESSFUL_GUIDED") return "PRACTICED";
+  if (evidence.evaluationResult.outcome === "REVIEW_SUCCESS") return "PRACTICED";
+  if (evidence.evaluationResult.outcome === "REVIEW_FAILURE") return "FRAGILE";
   if (evidence.evaluationResult.outcome === "INCOMPLETE") return "FRAGILE";
   return "INTRODUCED";
 }
