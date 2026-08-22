@@ -23,6 +23,7 @@ type ReviewEngineState = {
   markHydrated: () => void;
   syncExcelAttempt: (attempt: MissionAttempt, evidenceIds: string[], at?: number) => void;
   addErrorSignals: (signals: ErrorSignal[], at?: number) => void;
+  addErrorSignalsAndSchedule: (signals: ErrorSignal[], at?: number) => void;
   startReview: (reviewItemId: string, at?: number) => void;
   setDraft: (reviewItemId: string, response: string) => void;
   submitAnswer: (reviewItemId: string, at?: number) => void;
@@ -79,6 +80,24 @@ export const useReviewEngineStore = create<ReviewEngineState>()(
         return {
           errorPatterns: patterns,
           events: [...state.events, ...changed.map((pattern) => event(oldIds.has(pattern.id) ? "ERROR_PATTERN_UPDATED" : "ERROR_PATTERN_CREATED", { errorPatternId: pattern.id }, at))],
+        };
+      }),
+      addErrorSignalsAndSchedule: (signals, at = Date.now()) => set((state) => {
+        if (signals.length === 0) return state;
+        const patterns = mergeErrorPatterns(state.errorPatterns, signals);
+        const items = generateReviewItems(state.reviewItems, patterns, at);
+        if (JSON.stringify(patterns) === JSON.stringify(state.errorPatterns) && JSON.stringify(items) === JSON.stringify(state.reviewItems)) return state;
+        const oldPatternIds = new Set(state.errorPatterns.map((pattern) => pattern.id));
+        const oldItemIds = new Set(state.reviewItems.map((item) => item.id));
+        const changed = patterns.filter((pattern) => JSON.stringify(pattern) !== JSON.stringify(state.errorPatterns.find((prior) => prior.id === pattern.id)));
+        return {
+          errorPatterns: patterns,
+          reviewItems: items,
+          events: [
+            ...state.events,
+            ...changed.map((pattern) => event(oldPatternIds.has(pattern.id) ? "ERROR_PATTERN_UPDATED" : "ERROR_PATTERN_CREATED", { errorPatternId: pattern.id }, at)),
+            ...items.filter((item) => !oldItemIds.has(item.id)).map((item) => event("REVIEW_ITEM_CREATED", { reviewItemId: item.id }, at)),
+          ],
         };
       }),
       startReview: (reviewItemId, at = Date.now()) => set((state) => ({ activeItemId: reviewItemId, startedAt: { ...state.startedAt, [reviewItemId]: at }, events: [...state.events, event("REVIEW_STARTED", { reviewItemId }, at)] })),

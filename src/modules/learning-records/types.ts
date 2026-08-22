@@ -10,7 +10,7 @@ export const COMPETENCY_STATUSES = [
 export type CompetencyStatus = (typeof COMPETENCY_STATUSES)[number];
 export type CompetencyId = "EXCEL_CSV_IMPORT" | "TECHNICAL_ENGLISH_EXPLANATION";
 export type VerificationStatus = "PENDING" | "VALID" | "INVALID" | "UNVERIFIED";
-export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT" | "AUDIO_RESPONSE" | "TEXT_RESPONSE";
+export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT" | "AUDIO_RESPONSE" | "TEXT_RESPONSE" | "DEEP_MASTERY_SESSION";
 
 export const COMPETENCY_SEMANTICS: Record<CompetencyStatus, string> = {
   NOT_SEEN: "Aucune preuve significative.",
@@ -41,7 +41,7 @@ export type ArtifactReference = {
 };
 
 export type EvidenceEvaluation = {
-  outcome: "ENCOUNTERED" | "INCOMPLETE" | "SUCCESSFUL_GUIDED" | "REVIEW_SUCCESS" | "REVIEW_FAILURE";
+  outcome: "ENCOUNTERED" | "INCOMPLETE" | "SUCCESSFUL_GUIDED" | "SUCCESSFUL_TRANSFER" | "REVIEW_SUCCESS" | "REVIEW_FAILURE";
   delimiterDiagnostic: VerificationStatus;
   anomalyIdentification: VerificationStatus;
   missionCompletion: VerificationStatus;
@@ -52,6 +52,9 @@ export type EvidenceEvaluation = {
   languageStatus?: "TARGET_LANGUAGE_CONFIRMED" | "TARGET_LANGUAGE_NOT_CONFIRMED" | "UNKNOWN";
   contentStatus?: "SUFFICIENT" | "PARTIAL" | "INSUFFICIENT" | "UNKNOWN";
   competencyEvidenceStatus?: "VALID" | "PARTIAL" | "INVALID" | "UNEVALUATED";
+  feynmanExplanation?: VerificationStatus;
+  heldOutTransfer?: VerificationStatus;
+  independence?: "GUIDED" | "LIMITED_HELP" | "INDEPENDENT";
 };
 
 export type EvidenceRecord = {

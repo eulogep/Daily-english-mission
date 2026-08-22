@@ -115,6 +115,31 @@ function template(concept: ReviewConcept) {
       retryFeedback: "Ce n’est pas encore la colonne la plus directe. Repère celle qui contient les valeurs d’énergie.",
     };
   }
+  if (concept === "CSV_DELIMITER_VS_ENCODING") {
+    return {
+      reviewType: "MULTIPLE_CHOICE" as const,
+      title: "Délimiteur ou encodage ?",
+      prompt: "Quel réglage agit directement sur la répartition des champs en colonnes ?",
+      choices: [{ id: "delimiter", label: "Le délimiteur" }, { id: "encoding", label: "L’encodage" }],
+      expectedResponse: "delimiter",
+      acceptedKeywords: ["délimiteur", "delimiteur", "séparateur", "separateur"],
+      hint: "L’encodage agit surtout sur la représentation des caractères.",
+      successFeedback: "Exact. Le délimiteur sépare les champs; l’encodage représente les caractères.",
+      retryFeedback: "Compare un problème de colonnes à un problème de caractères illisibles.",
+    };
+  }
+  if (concept === "CSV_SEPARATOR_TRANSFER") {
+    return {
+      reviewType: "SHORT_TEXT" as const,
+      title: "Reconnaître un nouveau séparateur",
+      prompt: "Dans Name;Site;Energy, quel séparateur faut-il choisir à l’import ?",
+      expectedResponse: "point-virgule",
+      acceptedKeywords: ["point-virgule", "point virgule", ";", "semicolon"],
+      hint: "Observe le caractère placé entre chaque nom de colonne.",
+      successFeedback: "Exact. Le point-virgule est le délimiteur de ce fichier.",
+      retryFeedback: "Relis le caractère répété entre Name, Site et Energy.",
+    };
+  }
   return {
     reviewType: "MULTIPLE_CHOICE" as const,
     title: "Diagnostic du délimiteur",

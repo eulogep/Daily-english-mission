@@ -23,7 +23,9 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
   const [open, setOpen] = useState(false);
   const viewed = useLearningRecordStore((state) => state.recordEvidenceViewed);
   const isTechnicalEnglish = record.evidenceType === "AUDIO_RESPONSE" || record.evidenceType === "TEXT_RESPONSE";
-  const completed = record.evidenceType === "MISSION_COMPLETION";
+  const isDeepMastery = record.evidenceType === "DEEP_MASTERY_SESSION";
+  const deepMasteryCompleted = isDeepMastery && record.evaluationResult.missionCompletion === "VALID";
+  const completed = record.evidenceType === "MISSION_COMPLETION" || deepMasteryCompleted;
   const reviewResult = record.evidenceType === "REVIEW_RESULT";
   const reviewCorrect = record.evaluationResult.outcome === "REVIEW_SUCCESS";
   const transcriptAvailable = record.evaluationResult.transcriptionStatus === "MANUAL_AVAILABLE";
@@ -39,13 +41,19 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
     if (next) viewed(record.id);
   }
 
-  const eyebrow = isTechnicalEnglish
+  const eyebrow = isDeepMastery
+    ? "Maîtrise profonde — Diagnostic CSV"
+    : isTechnicalEnglish
     ? "Technical English"
     : reviewResult ? "Révision Excel — Import CSV" : "Excel CSV Foundations — Niveau 1";
-  const title = isTechnicalEnglish
+  const title = isDeepMastery
+    ? deepMasteryCompleted ? "Session de maîtrise terminée" : "Session de maîtrise commencée"
+    : isTechnicalEnglish
     ? "Explication du diagnostic CSV"
     : reviewResult ? "Révision terminée" : completed ? "Mission terminée" : "Tentative en cours";
-  const badge = isTechnicalEnglish
+  const badge = isDeepMastery
+    ? record.evaluationResult.outcome === "SUCCESSFUL_TRANSFER" ? "Transfert autonome validé" : deepMasteryCompleted ? "Pratique guidée validée" : "Session commencée"
+    : isTechnicalEnglish
     ? record.evidenceType === "AUDIO_RESPONSE" ? "Audio enregistré" : "Réponse écrite"
     : reviewResult ? reviewCorrect ? "Réponse correcte" : "À renforcer"
     : completed ? "Preuve guidée valide" : "Mission commencée";
@@ -66,7 +74,13 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
           <p className="mt-1 text-sm text-slate-600">{isTechnicalEnglish ? "Explication technique en anglais" : "Import CSV dans Excel"}</p>
         </div>
 
-        {isTechnicalEnglish ? (
+        {isDeepMastery ? (
+          <ul className="space-y-2 text-sm text-slate-700">
+            <li className="flex gap-2">{record.evaluationResult.feynmanExplanation === "VALID" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />}Explication avec ses propres mots {record.evaluationResult.feynmanExplanation === "VALID" ? "validée" : "à compléter"}</li>
+            <li className="flex gap-2">{record.evaluationResult.heldOutTransfer === "VALID" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />}Cas nouveau {record.evaluationResult.heldOutTransfer === "VALID" ? "réussi" : "non validé"}</li>
+            <li className="flex gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />{record.evaluationResult.outcome === "SUCCESSFUL_TRANSFER" ? "Démontrée grâce à un transfert avec aide limitée" : deepMasteryCompleted ? "Pratiquée dans un parcours guidé" : "Aucune promotion avant une preuve suffisante"}</li>
+          </ul>
+        ) : isTechnicalEnglish ? (
           <ul className="space-y-2 text-sm text-slate-700">
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />{record.evidenceType === "AUDIO_RESPONSE" ? "Audio enregistré localement" : "Réponse écrite enregistrée localement"}</li>
             <li className="flex gap-2">{transcriptAvailable ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />}{transcriptAvailable ? "Transcription manuelle disponible" : "Aucune transcription : contenu non évalué automatiquement"}</li>

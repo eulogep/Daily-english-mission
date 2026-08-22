@@ -8,7 +8,7 @@ export type ErrorType =
   | "LOW_CONFIDENCE"
   | "INCOMPLETE_RESPONSE";
 
-export type ReviewConcept = "CSV_DELIMITER_DIAGNOSIS" | "ENERGY_MISSING_VALUE_INSPECTION" | "TECHNICAL_CSV_EXPLANATION";
+export type ReviewConcept = "CSV_DELIMITER_DIAGNOSIS" | "CSV_DELIMITER_VS_ENCODING" | "CSV_SEPARATOR_TRANSFER" | "ENERGY_MISSING_VALUE_INSPECTION" | "TECHNICAL_CSV_EXPLANATION";
 export type ErrorSeverity = "LOW" | "MEDIUM" | "HIGH";
 export type ErrorResolutionStatus = "ACTIVE" | "IMPROVING" | "RESOLVED";
 export type ReviewStatus = "DUE" | "UPCOMING" | "COMPLETED" | "SUSPENDED";

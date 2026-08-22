@@ -84,6 +84,7 @@ export function evidenceFromExcelAttempt(attempt: MissionAttempt, mission: Missi
 
 function supportedStatus(evidence: EvidenceRecord): CompetencyStatus {
   if (evidence.verificationStatus === "INVALID") return "NOT_SEEN";
+  if (evidence.evaluationResult.outcome === "SUCCESSFUL_TRANSFER") return "DEMONSTRATED";
   if (evidence.evaluationResult.outcome === "SUCCESSFUL_GUIDED") return "PRACTICED";
   if (evidence.evaluationResult.outcome === "REVIEW_SUCCESS") return "PRACTICED";
   if (evidence.evaluationResult.outcome === "REVIEW_FAILURE") return "FRAGILE";
@@ -102,7 +103,7 @@ export function deriveCompetencyRecord(competencyId: CompetencyId, records: Evid
     updatedAt: latest.createdAt,
     supportingEvidenceIds: valid.filter((record) => supportedStatus(record) === status).map((record) => record.id),
     latestEvidenceId: latest.id,
-    confidence: status === "PRACTICED" ? "MEDIUM" : "LOW",
+    confidence: status === "DEMONSTRATED" ? "HIGH" : status === "PRACTICED" ? "MEDIUM" : "LOW",
     rationale: status === "PRACTICED" ? practicedRationale(competencyId) : rationale[status],
   };
 }
