@@ -5,9 +5,10 @@ export type ErrorType =
   | "DATA_INSPECTION_ERROR"
   | "HINT_DEPENDENCE"
   | "RETRY_DEPENDENCE"
-  | "LOW_CONFIDENCE";
+  | "LOW_CONFIDENCE"
+  | "INCOMPLETE_RESPONSE";
 
-export type ReviewConcept = "CSV_DELIMITER_DIAGNOSIS" | "ENERGY_MISSING_VALUE_INSPECTION";
+export type ReviewConcept = "CSV_DELIMITER_DIAGNOSIS" | "ENERGY_MISSING_VALUE_INSPECTION" | "TECHNICAL_CSV_EXPLANATION";
 export type ErrorSeverity = "LOW" | "MEDIUM" | "HIGH";
 export type ErrorResolutionStatus = "ACTIVE" | "IMPROVING" | "RESOLVED";
 export type ReviewStatus = "DUE" | "UPCOMING" | "COMPLETED" | "SUSPENDED";

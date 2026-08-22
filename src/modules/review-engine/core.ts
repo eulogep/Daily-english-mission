@@ -135,7 +135,7 @@ function template(concept: ReviewConcept) {
 export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPattern[], now: number): ReviewItem[] {
   const byId = new Map(existing.map((item) => [item.id, item]));
   const byConcept = new Map<ReviewConcept, ErrorPattern[]>();
-  patterns.filter((pattern) => pattern.resolvedStatus !== "RESOLVED").forEach((pattern) => byConcept.set(pattern.concept, [...(byConcept.get(pattern.concept) ?? []), pattern]));
+  patterns.filter((pattern) => pattern.resolvedStatus !== "RESOLVED" && pattern.concept !== "TECHNICAL_CSV_EXPLANATION").forEach((pattern) => byConcept.set(pattern.concept, [...(byConcept.get(pattern.concept) ?? []), pattern]));
   for (const [concept, conceptPatterns] of byConcept) {
     const id = `review:EXCEL_CSV_IMPORT:${concept}`;
     const prior = byId.get(id);

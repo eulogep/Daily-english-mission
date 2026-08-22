@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { MissionAttempt } from "@/modules/mission-runtime/types";
 import { applyReviewResult, detectExcelErrorSignals, evaluateReviewResponse, generateReviewItems, mergeErrorPatterns } from "./core";
-import type { ErrorPattern, ReviewEvent, ReviewEventType, ReviewItem, ReviewResultRecord } from "./types";
+import type { ErrorPattern, ErrorSignal, ReviewEvent, ReviewEventType, ReviewItem, ReviewResultRecord } from "./types";
 
 type ReviewFeedback = { correct: boolean; message: string };
 
@@ -22,6 +22,7 @@ type ReviewEngineState = {
   hints: Record<string, number>;
   markHydrated: () => void;
   syncExcelAttempt: (attempt: MissionAttempt, evidenceIds: string[], at?: number) => void;
+  addErrorSignals: (signals: ErrorSignal[], at?: number) => void;
   startReview: (reviewItemId: string, at?: number) => void;
   setDraft: (reviewItemId: string, response: string) => void;
   submitAnswer: (reviewItemId: string, at?: number) => void;
@@ -67,6 +68,17 @@ export const useReviewEngineStore = create<ReviewEngineState>()(
             ...changedPatterns.map((pattern) => event(oldPatternIds.has(pattern.id) ? "ERROR_PATTERN_UPDATED" : "ERROR_PATTERN_CREATED", { errorPatternId: pattern.id }, at)),
             ...items.filter((item) => !oldItemIds.has(item.id)).map((item) => event("REVIEW_ITEM_CREATED", { reviewItemId: item.id }, at)),
           ],
+        };
+      }),
+      addErrorSignals: (signals, at = Date.now()) => set((state) => {
+        if (signals.length === 0) return state;
+        const patterns = mergeErrorPatterns(state.errorPatterns, signals);
+        if (JSON.stringify(patterns) === JSON.stringify(state.errorPatterns)) return state;
+        const oldIds = new Set(state.errorPatterns.map((pattern) => pattern.id));
+        const changed = patterns.filter((pattern) => JSON.stringify(pattern) !== JSON.stringify(state.errorPatterns.find((prior) => prior.id === pattern.id)));
+        return {
+          errorPatterns: patterns,
+          events: [...state.events, ...changed.map((pattern) => event(oldIds.has(pattern.id) ? "ERROR_PATTERN_UPDATED" : "ERROR_PATTERN_CREATED", { errorPatternId: pattern.id }, at))],
         };
       }),
       startReview: (reviewItemId, at = Date.now()) => set((state) => ({ activeItemId: reviewItemId, startedAt: { ...state.startedAt, [reviewItemId]: at }, events: [...state.events, event("REVIEW_STARTED", { reviewItemId }, at)] })),

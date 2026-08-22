@@ -11,6 +11,10 @@ const rationale: Record<CompetencyStatus, string> = {
   RETAINED: "Compétence démontrée de nouveau après un délai significatif.",
 };
 
+function practicedRationale(competencyId: CompetencyId) {
+  return competencyId === "TECHNICAL_ENGLISH_EXPLANATION" ? "Pratiquée lors d’une explication technique guidée en anglais." : rationale.PRACTICED;
+}
+
 export interface EvidenceRepository {
   list(): EvidenceRecord[];
   upsert(records: EvidenceRecord[]): void;
@@ -99,7 +103,7 @@ export function deriveCompetencyRecord(competencyId: CompetencyId, records: Evid
     supportingEvidenceIds: valid.filter((record) => supportedStatus(record) === status).map((record) => record.id),
     latestEvidenceId: latest.id,
     confidence: status === "PRACTICED" ? "MEDIUM" : "LOW",
-    rationale: rationale[status],
+    rationale: status === "PRACTICED" ? practicedRationale(competencyId) : rationale[status],
   };
 }
 
@@ -120,6 +124,6 @@ export function reconcileExcelAttempt(existing: EvidenceRecord[], attempt: Missi
   return { evidence, competency: deriveCompetencyRecord("EXCEL_CSV_IMPORT", evidence) };
 }
 
-export function rebuildCompetencies(evidence: EvidenceRecord[], competencyIds: CompetencyId[] = ["EXCEL_CSV_IMPORT"]) {
+export function rebuildCompetencies(evidence: EvidenceRecord[], competencyIds: CompetencyId[] = ["EXCEL_CSV_IMPORT", "TECHNICAL_ENGLISH_EXPLANATION"]) {
   return competencyIds.map((competencyId) => deriveCompetencyRecord(competencyId, evidence));
 }

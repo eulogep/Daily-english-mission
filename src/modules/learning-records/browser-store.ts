@@ -34,15 +34,15 @@ export const useLearningRecordStore = create<LearningRecordState>()(
       markHydrated: () => set({ hydrated: true }),
       syncExcelAttempt: (attempt, mission) => set((state) => {
         const previousEvidenceIds = new Set(state.evidence.map((record) => record.id));
-        const previousCompetency = state.competencies.find((record) => record.competencyId === "EXCEL_CSV_IMPORT");
         const reconciled = reconcileExcelAttempt(state.evidence, attempt, mission);
+        const competencies = rebuildCompetencies(reconciled.evidence);
         const created = reconciled.evidence.filter((record) => !previousEvidenceIds.has(record.id));
         const evidenceChanged = JSON.stringify(reconciled.evidence) !== JSON.stringify(state.evidence);
-        const competencyChanged = JSON.stringify(previousCompetency) !== JSON.stringify(reconciled.competency);
+        const competencyChanged = JSON.stringify(competencies) !== JSON.stringify(state.competencies);
         if (!evidenceChanged && !competencyChanged) return state;
         return {
           evidence: reconciled.evidence,
-          competencies: [reconciled.competency],
+          competencies,
           events: [
             ...state.events,
             ...created.map((record) => event("EVIDENCE_CREATED", { evidenceId: record.id })),
@@ -54,15 +54,17 @@ export const useLearningRecordStore = create<LearningRecordState>()(
         const previousIds = new Set(state.evidence.map((record) => record.id));
         const evidence = upsertEvidence(state.evidence, records);
         const created = evidence.filter((record) => !previousIds.has(record.id));
-        if (created.length === 0) return state;
         const competencies = rebuildCompetencies(evidence);
+        const evidenceChanged = JSON.stringify(evidence) !== JSON.stringify(state.evidence);
+        const competencyChanged = JSON.stringify(competencies) !== JSON.stringify(state.competencies);
+        if (!evidenceChanged && !competencyChanged) return state;
         return {
           evidence,
           competencies,
           events: [
             ...state.events,
             ...created.map((record) => event("EVIDENCE_CREATED", { evidenceId: record.id })),
-            ...competencies.map((record) => event("COMPETENCY_STATE_UPDATED", { competencyId: record.competencyId })),
+            ...(competencyChanged ? competencies.map((record) => event("COMPETENCY_STATE_UPDATED", { competencyId: record.competencyId })) : []),
           ],
         };
       }),

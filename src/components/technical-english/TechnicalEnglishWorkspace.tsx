@@ -1,0 +1,62 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { AlertTriangle, ArrowRight, CheckCircle2, LoaderCircle, Mic, RotateCcw, ShieldCheck, Target, Type } from "lucide-react";
+import { AudioResponse } from "@/components/technical-english/AudioResponse";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { initializeTechnicalEnglishStore, useTechnicalEnglishStartupStore, useTechnicalEnglishStore } from "@/modules/technical-english/browser-store";
+
+export function TechnicalEnglishWorkspace() {
+  const currentAttemptId = useTechnicalEnglishStore((state) => state.currentAttemptId);
+  return <TechnicalEnglishAttemptWorkspace key={currentAttemptId ?? "pending"} />;
+}
+
+function TechnicalEnglishAttemptWorkspace() {
+  const { attempts, currentAttemptId, setMode, setModality, setAudioReference, setTextResponse, setManualTranscript, addEvent, evaluate, complete, restart } = useTechnicalEnglishStore();
+  const hydrationStatus = useTechnicalEnglishStartupStore((state) => state.status);
+  const hydrationError = useTechnicalEnglishStartupStore((state) => state.error);
+  const attempt = currentAttemptId ? attempts[currentAttemptId] : null;
+  const [comfort, setComfort] = useState<number | null>(null);
+  const [explainAgain, setExplainAgain] = useState<"YES" | "MAYBE" | "NO" | null>(null);
+  const [hardestWord, setHardestWord] = useState("");
+
+  if (hydrationStatus !== "READY" || !attempt) {
+    const failed = hydrationStatus === "RECOVERABLE_ERROR";
+    return <div className="mx-auto max-w-4xl space-y-7">
+      <header className="space-y-3"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Technical English</p><h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Explain a CSV problem in your own words</h1><p className="max-w-3xl leading-7 text-slate-600">Speak for 30–60 seconds. Communication matters more than reciting a perfect script.</p></header>
+      <Card className="border-emerald-900/15 bg-emerald-950 text-white shadow-lg"><CardHeader className="space-y-4"><Badge className="w-fit bg-emerald-200 text-emerald-950 hover:bg-emerald-200">REAL SCENARIO</Badge><CardTitle className="text-2xl leading-9">Explain in English what you should check when a CSV opens in one column in Excel.</CardTitle></CardHeader></Card>
+      <Card><CardContent className="flex items-start gap-4 p-6">{failed ? <AlertTriangle className="mt-0.5 size-6 shrink-0 text-amber-700" aria-hidden="true" /> : <LoaderCircle className="mt-0.5 size-6 shrink-0 animate-spin text-emerald-700" aria-hidden="true" />}<div><p className="font-semibold">{failed ? "État local indisponible" : "Préparation de ta mission locale…"}</p><p role={failed ? "alert" : "status"} className="mt-2 text-sm leading-6 text-slate-600">{failed ? hydrationError : "Le prompt est prêt. Tes tentatives locales sont en cours de restauration."}</p>{failed && <Button type="button" className="mt-4" onClick={() => void initializeTechnicalEnglishStore()}><RotateCcw />Réessayer</Button>}</div></CardContent></Card>
+    </div>;
+  }
+
+  const sourceReady = attempt.modality === "AUDIO" ? Boolean(attempt.audioReference) : attempt.textResponse.trim().length >= 12;
+  const feedback = attempt.feedback;
+
+  if (attempt.status === "COMPLETED") {
+    return <div className="mx-auto max-w-3xl space-y-6"><Card className="border-emerald-200 bg-emerald-50 shadow-sm"><CardContent className="space-y-5 p-7"><span className="grid size-12 place-items-center rounded-2xl bg-emerald-800 text-white"><CheckCircle2 /></span><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Tentative terminée</p><h1 className="mt-2 text-3xl font-semibold">Technical English — CSV troubleshooting</h1><p className="mt-2 text-emerald-950/75">Ta réponse est enregistrée localement et reliée à ta compétence.</p></div><div className="grid gap-3 sm:grid-cols-3"><div className="rounded-xl bg-white/70 p-4"><p className="text-xs text-slate-500">Support</p><p className="mt-1 font-semibold">{attempt.modality === "AUDIO" ? "Audio local" : "Texte local"}</p></div><div className="rounded-xl bg-white/70 p-4"><p className="text-xs text-slate-500">Transcription</p><p className="mt-1 font-semibold">{attempt.transcriptionStatus === "MANUAL_AVAILABLE" ? "Manuelle disponible" : "Non disponible"}</p></div><div className="rounded-xl bg-white/70 p-4"><p className="text-xs text-slate-500">Feedback langue</p><p className="mt-1 font-semibold">{attempt.feedback?.availability === "AVAILABLE" ? "Disponible" : "Non fabriqué"}</p></div></div><div className="flex flex-wrap gap-3"><Button onClick={restart}><RotateCcw />Nouvelle tentative</Button><Button asChild variant="outline"><Link href="/evidence">Voir ma preuve<ArrowRight /></Link></Button></div></CardContent></Card></div>;
+  }
+
+  return <div className="mx-auto max-w-4xl space-y-7">
+    <header className="space-y-3"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Technical English</p><h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Explain a CSV problem in your own words</h1><p className="max-w-3xl leading-7 text-slate-600">Speak for 30–60 seconds. Communication matters more than reciting a perfect script.</p></header>
+
+    <Card className="border-emerald-900/15 bg-emerald-950 text-white shadow-lg"><CardHeader className="space-y-4"><div className="flex flex-wrap items-center gap-2"><Badge className="bg-emerald-200 text-emerald-950 hover:bg-emerald-200">REAL SCENARIO</Badge><span className="text-sm text-emerald-100/75">Excel CSV Foundations</span></div><CardTitle className="text-2xl leading-9">Explain in English what you should check when a CSV opens in one column in Excel.</CardTitle></CardHeader><CardContent><div className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-4"><Target className="mt-0.5 size-5 shrink-0 text-emerald-300" /><p className="text-sm leading-6 text-emerald-50/80">Use concepts such as delimiter, import, columns, preview and CSV. You do not need to use every word.</p></div></CardContent></Card>
+
+    <Card><CardHeader><CardTitle className="text-xl">1. Choisis ton objectif</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setMode("FLUENCY_MODE")} className={`rounded-xl border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${attempt.mode === "FLUENCY_MODE" ? "border-emerald-700 bg-emerald-50" : "border-slate-200"}`}><p className="font-semibold">Fluency mode</p><p className="mt-1 text-sm text-slate-600">Parler avec continuité. Maximum 3 corrections importantes.</p></button><button type="button" onClick={() => setMode("ACCURACY_MODE")} className={`rounded-xl border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${attempt.mode === "ACCURACY_MODE" ? "border-emerald-700 bg-emerald-50" : "border-slate-200"}`}><p className="font-semibold">Accuracy mode</p><p className="mt-1 text-sm text-slate-600">Préciser le vocabulaire, la structure et les concepts.</p></button></CardContent></Card>
+
+    <Card><CardHeader><CardTitle className="text-xl">2. Réponds</CardTitle><div className="flex gap-2"><Button variant={attempt.modality === "AUDIO" ? "default" : "outline"} onClick={() => setModality("AUDIO")}><Mic />Parler</Button><Button variant={attempt.modality === "TEXT" ? "default" : "outline"} onClick={() => setModality("TEXT")}><Type />Écrire</Button></div></CardHeader><CardContent className="space-y-5">
+      {attempt.modality === "AUDIO" ? <><AudioResponse existing={attempt.audioReference} onSaved={setAudioReference} onDeleted={() => setAudioReference(null)} onEvent={addEvent} onFallback={() => setModality("TEXT")} /><details className="rounded-xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-semibold">Ajouter une transcription manuelle (optionnel)</summary><p className="mt-2 text-sm text-slate-600">La transcription automatique est indisponible : aucun service externe n’est appelé. Tu peux saisir ici ce que tu as dit pour obtenir un feedback déterministe sur les concepts.</p><Textarea className="mt-3 min-h-28" value={attempt.manualTranscript} onChange={(event) => setManualTranscript(event.target.value)} placeholder="Write what you said in English…" /></details></> : <div className="space-y-2"><label htmlFor="technical-answer" className="text-sm font-semibold">Réponse écrite de remplacement</label><Textarea id="technical-answer" value={attempt.textResponse} onChange={(event) => setTextResponse(event.target.value)} className="min-h-36" placeholder="First, I check the delimiter in the CSV import preview…" /><p className="text-xs text-slate-500">Cette réponse reste locale et produit une preuve TEXT_RESPONSE, distincte d’un audio.</p></div>}
+      {attempt.status !== "EVALUATED" && <Button size="lg" onClick={evaluate} disabled={!sourceReady}>Analyser ce qui est vérifiable<ArrowRight /></Button>}
+    </CardContent></Card>
+
+    {attempt.status === "EVALUATED" && feedback && <Card className="border-emerald-900/15"><CardHeader><div className="flex items-center justify-between gap-3"><CardTitle className="text-xl">3. Feedback concis</CardTitle><Badge>{attempt.mode === "FLUENCY_MODE" ? "FLUENCY" : "ACCURACY"}</Badge></div></CardHeader><CardContent className="space-y-5"><div><p className="font-semibold text-emerald-800">What worked</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">{feedback.whatWorked.map((item) => <li key={item}>{item}</li>)}</ul></div><div><p className="font-semibold text-amber-800">Improve</p>{feedback.corrections.length ? <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700">{feedback.corrections.map((item) => <li key={item}>{item}</li>)}</ol> : <p className="mt-2 text-sm text-slate-600">Aucune correction linguistique fiable sans transcription. Rien n’est inventé.</p>}</div><div className="rounded-xl bg-slate-50 p-4 text-sm"><strong>Try again:</strong> {feedback.tryAgain}</div><details className="text-sm text-slate-600"><summary className="cursor-pointer font-semibold">Pourquoi ce feedback ?</summary><p className="mt-2">Il vérifie uniquement la longueur et la présence de concepts techniques dans le texte disponible. Il ne note ni la prononciation ni l’accent.</p></details></CardContent></Card>}
+
+    {attempt.status === "EVALUATED" && <Card><CardHeader><CardTitle className="text-xl">4. Auto-évaluation</CardTitle></CardHeader><CardContent className="space-y-5"><div><p className="text-sm font-semibold">How comfortable did you feel?</p><div className="mt-2 flex flex-wrap gap-2">{[1,2,3,4,5].map((value) => <Button key={value} size="sm" variant={comfort === value ? "default" : "outline"} onClick={() => setComfort(value)}>{value}/5</Button>)}</div></div><div><p className="text-sm font-semibold">Could you explain this again without help?</p><div className="mt-2 flex flex-wrap gap-2">{([['YES','Yes'],['MAYBE','Maybe'],['NO','No']] as const).map(([value,label]) => <Button key={value} size="sm" variant={explainAgain === value ? "default" : "outline"} onClick={() => setExplainAgain(value)}>{label}</Button>)}</div></div><div><label htmlFor="hardest-word" className="text-sm font-semibold">What word was hardest? <span className="font-normal text-slate-500">(optional)</span></label><Input id="hardest-word" value={hardestWord} onChange={(event) => setHardestWord(event.target.value)} className="mt-2" /></div><Button size="lg" disabled={comfort === null || explainAgain === null} onClick={() => comfort !== null && explainAgain && complete(comfort, explainAgain, hardestWord)}>Terminer et créer la preuve<CheckCircle2 /></Button></CardContent></Card>}
+
+    <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950"><ShieldCheck className="mt-0.5 size-5 shrink-0" /><p>Audio et texte classés PERSONAL, conservés sur cet appareil. Aucun enregistrement automatique, upload cloud ou transcription externe.</p></div>
+  </div>;
+}
