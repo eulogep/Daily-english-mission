@@ -3,21 +3,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-// @ts-expect-error Node's strip-types runner requires explicit TypeScript extensions.
 import { FileDocumentExtractionCache } from "../../../src/modules/document-extraction/cache.ts";
-// @ts-expect-error Node's strip-types runner requires explicit TypeScript extensions.
 import { routeDocumentExtraction } from "../../../src/modules/document-extraction/core.ts";
-// @ts-expect-error Node's strip-types runner requires explicit TypeScript extensions.
 import { DoclingDocumentExtractor, normalizeDoclingPayload } from "../../../src/modules/document-extraction/docling-adapter.ts";
-// @ts-expect-error Node's strip-types runner requires explicit TypeScript extensions.
 import { pathIsWithinRoots, runBoundedLocalProcess } from "../../../src/modules/document-extraction/local-process.ts";
-// @ts-expect-error Node's strip-types runner requires explicit TypeScript extensions.
 import { PdfJsDocumentExtractor } from "../../../src/modules/document-extraction/pdfjs-adapter.ts";
-// @ts-expect-error Node's strip-types runner requires explicit TypeScript extensions.
 import { academicPdfQuizIsGrounded } from "../../../src/modules/academic-workspace/core.ts";
-// @ts-expect-error Node's strip-types runner requires explicit TypeScript extensions.
 import { networkingPdfQuiz } from "../../../src/modules/academic-workspace/pilot-registry.ts";
-// @ts-expect-error Node's strip-types runner requires explicit TypeScript extensions.
 import { remediationMethod, remediationSupport } from "../../../src/modules/academic-workspace/remediation.ts";
 
 const options = { sourceId: "SYNTHETIC-SOURCE", pageStart: 1, pageEnd: 1, timeoutMs: 1000 };

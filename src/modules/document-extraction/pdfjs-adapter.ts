@@ -1,7 +1,5 @@
 import { readFile } from "node:fs/promises";
-// @ts-expect-error Node's strip-types test runner requires explicit TypeScript extensions.
 import { buildPdfExtractionResult, extractPdfBytes } from "../academic-workspace/pdf-extractor.ts";
-// @ts-expect-error Node's strip-types test runner requires explicit TypeScript extensions.
 import { documentQuality, pageQuality } from "./core.ts";
 import type { Document, DocumentExtractor, DocumentPage, ExtractionOptions } from "./types";
 

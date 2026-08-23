@@ -117,7 +117,7 @@ test("N. checksum duplicate detection distinguishes exact possible and new", () 
 
 test("O. extractor registry is local-only and declares all five formats", () => {
   assert.deepEqual(Object.keys(academicExtractorRegistry).sort(), ["CSV", "DOCX", "MARKDOWN", "PDF", "TEXT"]);
-  assert.ok(Object.values(academicExtractorRegistry).every((descriptor: { localOnly: boolean }) => descriptor.localOnly));
+  assert.ok((Object.values(academicExtractorRegistry) as Array<{ localOnly: boolean }>).every((descriptor) => descriptor.localOnly));
   assert.equal(extractorFor("PDF").capabilities.scannedPdf, "OCR_REQUIRED");
 });
 

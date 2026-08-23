@@ -1,7 +1,5 @@
 import { resolve } from "node:path";
-// @ts-expect-error Node's strip-types test runner requires explicit TypeScript extensions.
 import { documentQuality, pageQuality } from "./core.ts";
-// @ts-expect-error Node's strip-types test runner requires explicit TypeScript extensions.
 import { pathIsWithinRoots, runBoundedLocalProcess, type LocalProcessResult } from "./local-process.ts";
 import type { BlockKind, Document, DocumentBlock, DocumentExtractor, DocumentPage, ExtractionOptions, ExtractionQuality, VisualContent, VisualContentType } from "./types";
 
