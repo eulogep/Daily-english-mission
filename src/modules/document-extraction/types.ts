@@ -1,0 +1,19 @@
+export type DocumentFormat = "PDF" | "DOCX" | "PPTX" | "XLSX" | "MARKDOWN" | "TEXT" | "CSV";
+export type DocumentExtractorId = "PDFJS" | "DOCLING";
+export type ExtractionQuality = "HIGH" | "MEDIUM" | "LOW" | "FAILED";
+export type ContentStatus = "EXTRACTED" | "PARTIAL" | "NOT_DETECTED" | "FAILED";
+export type VisualContentType = "TEXT_CONTENT" | "VISUAL_DIAGRAM" | "TABLE" | "FORMULA" | "IMAGE" | "LAYOUT_RELATIONSHIP";
+export type BlockKind = "TEXT" | "HEADING" | "LIST_ITEM" | "CAPTION" | "TABLE" | "FORMULA" | "IMAGE" | "DIAGRAM";
+export type BoundingBox = { left: number; top: number; right: number; bottom: number; origin?: string };
+export type BlockProvenance = { sourceId: string; pageNumber: number; extractorId: DocumentExtractorId; blockId: string };
+export type DocumentBlock = { id: string; kind: BlockKind; text: string; label: string; pageNumber: number; sectionId: string | null; boundingBox: BoundingBox | null; confidence: number | null; quality: ExtractionQuality; provenance: BlockProvenance };
+export type VisualContent = { id: string; type: VisualContentType; pageNumber: number; status: ContentStatus; quality: ExtractionQuality; semanticInterpretation: "VERIFIED" | "UNVERIFIED" | "NOT_APPLICABLE"; note: string; provenance: BlockProvenance };
+export type DocumentPage = { pageNumber: number; width: number | null; height: number | null; text: string; blocks: DocumentBlock[]; images: VisualContent[]; tables: VisualContent[]; textStatus: ContentStatus; visualStatus: ContentStatus; quality: ExtractionQuality; warnings: string[] };
+export type DocumentSection = { id: string; title: string; pageStart: number; pageEnd: number; text: string; sourceId: string; blockIds: string[]; confidence: number; verificationStatus: "VERIFIED" | "NEEDS_REVIEW"; quality: ExtractionQuality };
+export type NormalizedDocument = { schemaVersion: 1; sourceId: string; title: string; format: DocumentFormat; extractorId: DocumentExtractorId; extractorVersion: string; localOnly: true; pageCount: number; pages: DocumentPage[]; sections: DocumentSection[]; blocks: DocumentBlock[]; tables: VisualContent[]; formulas: VisualContent[]; images: VisualContent[]; visualContent: VisualContent[]; extractionQuality: ExtractionQuality; quality: ExtractionQuality; provenance: { sourceId: string; extractorId: DocumentExtractorId; extractorVersion: string; pageStart: number; pageEnd: number }; warnings: string[] };
+export type Document = NormalizedDocument;
+export type ExtractionOptions = { sourceId: string; pageStart: number; pageEnd: number; timeoutMs?: number; detectTables?: boolean; detectFormulas?: boolean; detectPictures?: boolean };
+export type ExtractorCapabilities = { text: boolean; layout: boolean; tables: boolean; formulas: boolean; pictures: boolean; ocr: boolean };
+export interface DocumentExtractor { readonly id: DocumentExtractorId; readonly supportedFormats: readonly DocumentFormat[]; readonly capabilities: ExtractorCapabilities; readonly version: string; readonly localOnly: true; extract(documentPath: string, options: ExtractionOptions): Promise<Document> }
+export type RoutingSignals = { format: DocumentFormat; pdfType?: "TEXT_PDF" | "SCANNED_PDF" | "MIXED_PDF" | "UNKNOWN"; textLayerReliable?: boolean; complexLayout?: boolean; needsTables?: boolean; needsFormulas?: boolean; needsPictures?: boolean; doclingAvailable: boolean };
+export type ExtractionRoute = { extractorId: DocumentExtractorId | null; qualityCeiling: ExtractionQuality; degraded: boolean; reasons: string[] };

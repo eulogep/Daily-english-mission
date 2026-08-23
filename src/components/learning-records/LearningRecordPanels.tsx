@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Circle, FileCheck2, Info, ShieldCheck } from "lucide-react";
+import { BookOpen, CheckCircle2, Circle, FileCheck2, Info, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,15 +19,28 @@ function dateLabel(timestamp: number) {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short" }).format(new Date(timestamp));
 }
 
+function uniqueAcademicPageReferences(record: EvidenceRecord) {
+  return Array.from(
+    new Map(
+      (record.evaluationResult.academicPageReferences ?? []).map((reference) => [
+        `${reference.sourceId}:${reference.pageStart}:${reference.pageEnd}`,
+        reference,
+      ]),
+    ).values(),
+  );
+}
+
 function EvidenceCard({ record }: { record: EvidenceRecord }) {
   const [open, setOpen] = useState(false);
   const viewed = useLearningRecordStore((state) => state.recordEvidenceViewed);
   const isTechnicalEnglish = record.evidenceType === "AUDIO_RESPONSE" || record.evidenceType === "TEXT_RESPONSE";
   const isDeepMastery = record.evidenceType === "DEEP_MASTERY_SESSION";
   const isProfessionalScenario = record.evidenceType === "PROFESSIONAL_SCENARIO";
+  const isAcademicQuiz = record.evidenceType === "ACADEMIC_QUIZ";
   const deepMasteryCompleted = isDeepMastery && record.evaluationResult.missionCompletion === "VALID";
   const professionalCompleted = isProfessionalScenario && record.evaluationResult.missionCompletion === "VALID";
-  const completed = record.evidenceType === "MISSION_COMPLETION" || deepMasteryCompleted || professionalCompleted;
+  const academicCompleted = isAcademicQuiz && record.evaluationResult.missionCompletion === "VALID";
+  const completed = record.evidenceType === "MISSION_COMPLETION" || deepMasteryCompleted || professionalCompleted || academicCompleted;
   const reviewResult = record.evidenceType === "REVIEW_RESULT";
   const reviewCorrect = record.evaluationResult.outcome === "REVIEW_SUCCESS";
   const transcriptAvailable = record.evaluationResult.transcriptionStatus === "MANUAL_AVAILABLE";
@@ -43,21 +56,27 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
     if (next) viewed(record.id);
   }
 
-  const eyebrow = isProfessionalScenario
+  const eyebrow = isAcademicQuiz
+    ? "Quiz académique — Réseaux"
+    : isProfessionalScenario
     ? "Scénario professionnel — Anomalie industrielle"
     : isDeepMastery
     ? "Maîtrise profonde — Diagnostic CSV"
     : isTechnicalEnglish
     ? "Technical English"
     : reviewResult ? "Révision Excel — Import CSV" : "Excel CSV Foundations — Niveau 1";
-  const title = isProfessionalScenario
+  const title = isAcademicQuiz
+    ? academicCompleted ? "Quiz réseau terminé" : "Quiz réseau commencé"
+    : isProfessionalScenario
     ? professionalCompleted ? "Situation professionnelle traitée" : "Situation professionnelle commencée"
     : isDeepMastery
     ? deepMasteryCompleted ? "Session de maîtrise terminée" : "Session de maîtrise commencée"
     : isTechnicalEnglish
     ? "Explication du diagnostic CSV"
     : reviewResult ? "Révision terminée" : completed ? "Mission terminée" : "Tentative en cours";
-  const badge = isProfessionalScenario
+  const badge = isAcademicQuiz
+    ? academicCompleted ? "Pratique académique validée" : "Quiz en cours"
+    : isProfessionalScenario
     ? professionalCompleted ? "Pratique professionnelle validée" : "Analyse en cours"
     : isDeepMastery
     ? record.evaluationResult.outcome === "SUCCESSFUL_TRANSFER" ? "Transfert autonome validé" : deepMasteryCompleted ? "Pratique guidée validée" : "Session commencée"
@@ -79,10 +98,18 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
       <CardContent className="space-y-5">
         <div>
           <p className="text-sm font-semibold">Compétence</p>
-          <p className="mt-1 text-sm text-slate-600">{isProfessionalScenario ? "Analyse et communication professionnelles" : isTechnicalEnglish ? "Explication technique en anglais" : "Import CSV dans Excel"}</p>
+          <p className="mt-1 text-sm text-slate-600">{isAcademicQuiz ? "Fondamentaux réseau et raisonnement OSI/TCP-IP" : isProfessionalScenario ? "Analyse et communication professionnelles" : isTechnicalEnglish ? "Explication technique en anglais" : "Import CSV dans Excel"}</p>
         </div>
 
-        {isProfessionalScenario ? (
+        {isAcademicQuiz ? (
+          <ul className="space-y-2 text-sm text-slate-700">
+            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />Quiz relié à {record.evaluationResult.academicSourceIds?.length ?? 0} source(s), {record.evaluationResult.academicSectionIds?.length ?? 0} section(s) et {record.evaluationResult.academicConceptIds?.length ?? 0} concept(s).</li>
+            {uniqueAcademicPageReferences(record).map((reference) => <li key={`${reference.sourceId}:${reference.pageStart}:${reference.pageEnd}`} className="flex gap-2"><BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700" />{reference.sourceId} — pages {reference.pageStart}–{reference.pageEnd}</li>)}
+            {record.evaluationResult.academicRemediations?.filter((remediation) => remediation.selectedMethod).map((remediation) => <li key={`remediation:${remediation.questionId}`} className="flex gap-2"><Info className="mt-0.5 size-4 shrink-0 text-cyan-700" />Remédiation guidée : {remediation.selectedMethod?.replaceAll("_", " ").toLocaleLowerCase("fr-FR")} · résultat après support : {remediation.postRemediationResult === "SUCCESS" ? "réussi" : remediation.postRemediationResult === "FAILURE" ? "à renforcer" : "en attente"}</li>)}
+            <li className="flex gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" />Provenance déterministe vérifiée; état plafonné à Pratiquée.</li>
+            <li><Button variant="outline" size="sm" asChild><Link href={record.evaluationResult.academicSourceIds?.includes("ACADEMIC-NETWORK-CH01-001") ? "/subjects/networking/sources/ch01-introduction-inf3050" : "/subjects/networking"}>Retourner au cours source</Link></Button></li>
+          </ul>
+        ) : isProfessionalScenario ? (
           <ul className="space-y-2 text-sm text-slate-700">
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />Données du cas classées TRAINING_SYNTHETIC</li>
             {Object.entries(record.evaluationResult.professionalDimensions ?? {}).map(([dimension, status]) => <li key={dimension} className="flex gap-2">{status === "VALID" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden="true" />}<span>{dimension.replaceAll("_", " ")} : {status === "VALID" ? "validé" : status?.toLowerCase()}</span></li>)}
@@ -165,6 +192,8 @@ const competencyPresentation: Record<CompetencyId, { subject: string; title: str
   FACT_VS_ASSUMPTION: { subject: "Pratique professionnelle", title: "Distinguer fait et hypothèse", evidenceLabel: "Scénario professionnel industriel" },
   PROFESSIONAL_STATUS_UPDATE: { subject: "Communication professionnelle", title: "Rédiger un point de situation", evidenceLabel: "Scénario professionnel industriel" },
   ACTIONABLE_NEXT_STEP: { subject: "Décision professionnelle", title: "Proposer une prochaine action", evidenceLabel: "Scénario professionnel industriel" },
+  NETWORK_FUNDAMENTALS: { subject: "Réseaux", title: "Fondamentaux des protocoles réseau", evidenceLabel: "Quiz académique réseau" },
+  OSI_TCP_IP_REASONING: { subject: "Réseaux", title: "Raisonner avec OSI et TCP/IP", evidenceLabel: "Quiz académique réseau" },
 };
 
 function CompetencyCard({ competency, supporting }: { competency: Pick<CompetencyRecord, "competencyId" | "status" | "supportingEvidenceIds" | "rationale">; supporting: EvidenceRecord[] }) {
@@ -182,7 +211,7 @@ function CompetencyCard({ competency, supporting }: { competency: Pick<Competenc
 export function ProgressWorkspace() {
   const { hydrated, competencies, evidence } = useLearningRecordStore();
   if (!hydrated) return <p className="text-sm text-slate-500">Chargement de la progression locale…</p>;
-  const ids: CompetencyId[] = ["EXCEL_CSV_IMPORT", "TECHNICAL_ENGLISH_EXPLANATION", "DATA_ANOMALY_IDENTIFICATION", "FACT_VS_ASSUMPTION", "PROFESSIONAL_STATUS_UPDATE", "ACTIONABLE_NEXT_STEP"];
+  const ids: CompetencyId[] = ["EXCEL_CSV_IMPORT", "TECHNICAL_ENGLISH_EXPLANATION", "DATA_ANOMALY_IDENTIFICATION", "FACT_VS_ASSUMPTION", "PROFESSIONAL_STATUS_UPDATE", "ACTIONABLE_NEXT_STEP", "NETWORK_FUNDAMENTALS", "OSI_TCP_IP_REASONING"];
   return <div className="space-y-6"><header><p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Ta progression</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Des compétences expliquées par leurs preuves</h1><p className="mt-2 text-slate-600">Aucun pourcentage artificiel : chaque statut vient uniquement de tes activités enregistrées.</p></header><div className="grid gap-5">{ids.map((competencyId) => {
     const competency: Pick<CompetencyRecord, "competencyId" | "status" | "supportingEvidenceIds" | "rationale"> = competencies.find((record) => record.competencyId === competencyId) ?? { competencyId, status: "NOT_SEEN", supportingEvidenceIds: [], rationale: COMPETENCY_SEMANTICS.NOT_SEEN };
     const supporting = evidence.filter((record) => competency.supportingEvidenceIds.includes(record.id));

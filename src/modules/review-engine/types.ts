@@ -17,7 +17,12 @@ export type ReviewConcept =
   | "OVERCLAIM_WITHOUT_EVIDENCE"
   | "MISSED_DATA_ANOMALY"
   | "NO_NEXT_ACTION"
-  | "CONFUSED_FACT_AND_ASSUMPTION";
+  | "CONFUSED_FACT_AND_ASSUMPTION"
+  | "OSI_LAYER_MISCLASSIFICATION"
+  | "TCP_UDP_CONFUSION"
+  | "ENCAPSULATION_PDU_CONFUSION"
+  | "OSI_LAYER_ORDER_CONFUSION"
+  | "TCP_IP_LAYER_RESPONSIBILITY_CONFUSION";
 export type ErrorSeverity = "LOW" | "MEDIUM" | "HIGH";
 export type ErrorResolutionStatus = "ACTIVE" | "IMPROVING" | "RESOLVED";
 export type ReviewStatus = "DUE" | "UPCOMING" | "COMPLETED" | "SUSPENDED";
@@ -34,6 +39,10 @@ export type ErrorSignal = {
   description: string;
   observedAt: number;
   severity: ErrorSeverity;
+  academicSourceId?: string;
+  academicSectionId?: string;
+  remediationUsed?: boolean;
+  remediationMethod?: string | null;
 };
 
 export type ErrorPattern = {
@@ -51,7 +60,13 @@ export type ErrorPattern = {
   severity: ErrorSeverity;
   resolvedStatus: ErrorResolutionStatus;
   latestReviewResult: "CORRECT" | "INCORRECT" | null;
-  metadata: { observedSignalIds: string[]; successfulReviewCount: number };
+  metadata: {
+    observedSignalIds: string[];
+    successfulReviewCount: number;
+    academicSourceIds?: string[];
+    academicSectionIds?: string[];
+    remediationMethods?: string[];
+  };
   sourceClassification: "PERSONAL";
 };
 
@@ -82,6 +97,9 @@ export type ReviewItem = {
   lastReviewedAt: number | null;
   nextReviewAt: number;
   whyDue: string;
+  academicSourceIds?: string[];
+  academicSectionIds?: string[];
+  remediationMethods?: string[];
   sourceClassification: "PERSONAL";
 };
 

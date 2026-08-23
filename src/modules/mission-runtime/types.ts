@@ -57,6 +57,7 @@ export type MissionDefinition = {
   estimatedMinutes: number;
   completionStatus?: "PRACTICED";
   completionSummary?: string[];
+  sourceBundleIds?: string[];
   steps: MissionStepDefinition[];
 };
 

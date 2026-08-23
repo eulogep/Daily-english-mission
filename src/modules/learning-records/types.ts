@@ -14,9 +14,11 @@ export type CompetencyId =
   | "DATA_ANOMALY_IDENTIFICATION"
   | "FACT_VS_ASSUMPTION"
   | "PROFESSIONAL_STATUS_UPDATE"
-  | "ACTIONABLE_NEXT_STEP";
+  | "ACTIONABLE_NEXT_STEP"
+  | "NETWORK_FUNDAMENTALS"
+  | "OSI_TCP_IP_REASONING";
 export type VerificationStatus = "PENDING" | "VALID" | "INVALID" | "UNVERIFIED";
-export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT" | "AUDIO_RESPONSE" | "TEXT_RESPONSE" | "DEEP_MASTERY_SESSION" | "PROFESSIONAL_SCENARIO";
+export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT" | "AUDIO_RESPONSE" | "TEXT_RESPONSE" | "DEEP_MASTERY_SESSION" | "PROFESSIONAL_SCENARIO" | "ACADEMIC_QUIZ";
 export type ProfessionalEvaluationDimension =
   | "FACTUAL_ACCURACY"
   | "PROBLEM_IDENTIFICATION"
@@ -72,6 +74,19 @@ export type EvidenceEvaluation = {
   dataClassification?: "TRAINING_SYNTHETIC";
   assistanceMode?: "NONE" | "IN_APP_SCAFFOLD" | "EXTERNAL_AI" | "OTHER";
   professionalWritingEvidence?: "GUIDED" | "INDEPENDENT" | "NOT_AUTONOMOUS_EXTERNAL_AI";
+  academicSourceIds?: string[];
+  academicSectionIds?: string[];
+  academicConceptIds?: string[];
+  academicPageReferences?: Array<{ sourceId: string; pageStart: number; pageEnd: number }>;
+  academicGroundingStatus?: "VERIFIED" | "INVALID";
+  academicRemediations?: Array<{
+    questionId: string;
+    sourceId: string;
+    sectionId: string;
+    conceptIds: string[];
+    selectedMethod: string | null;
+    postRemediationResult: "PENDING" | "SUCCESS" | "FAILURE";
+  }>;
 };
 
 export type EvidenceRecord = {

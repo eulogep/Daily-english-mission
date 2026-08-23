@@ -12,6 +12,7 @@ export const excelLevel1Mission: MissionDefinition = {
   reason: "Cette mission cible ton principal blocage observé pendant la baseline : importer correctement un fichier CSV dans Excel.",
   estimatedMinutes: 20,
   completionStatus: "PRACTICED",
+  sourceBundleIds: ["EXCEL_CSV_IMPORT_FOUNDATIONS"],
   completionSummary: [
     "CSV ouvert et importé",
     "Colonnes et délimiteur vérifiés",

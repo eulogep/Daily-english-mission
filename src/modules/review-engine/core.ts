@@ -81,12 +81,29 @@ export function mergeErrorPatterns(existing: ErrorPattern[], signals: ErrorSigna
         severity: current.severity,
         resolvedStatus: "ACTIVE",
         latestReviewResult: null,
-        metadata: { observedSignalIds: [current.id], successfulReviewCount: 0 },
+        metadata: {
+          observedSignalIds: [current.id],
+          successfulReviewCount: 0,
+          academicSourceIds: current.academicSourceId ? [current.academicSourceId] : [],
+          academicSectionIds: current.academicSectionId ? [current.academicSectionId] : [],
+          remediationMethods: current.remediationMethod ? [current.remediationMethod] : [],
+        },
         sourceClassification: "PERSONAL",
       });
       continue;
     }
-    if (prior.metadata.observedSignalIds.includes(current.id)) continue;
+    if (prior.metadata.observedSignalIds.includes(current.id)) {
+      byId.set(id, {
+        ...prior,
+        metadata: {
+          ...prior.metadata,
+          academicSourceIds: unique([...(prior.metadata.academicSourceIds ?? []), ...(current.academicSourceId ? [current.academicSourceId] : [])]),
+          academicSectionIds: unique([...(prior.metadata.academicSectionIds ?? []), ...(current.academicSectionId ? [current.academicSectionId] : [])]),
+          remediationMethods: unique([...(prior.metadata.remediationMethods ?? []), ...(current.remediationMethod ? [current.remediationMethod] : [])]),
+        },
+      });
+      continue;
+    }
     const occurrenceCount = prior.occurrenceCount + 1;
     byId.set(id, {
       ...prior,
@@ -96,13 +113,58 @@ export function mergeErrorPatterns(existing: ErrorPattern[], signals: ErrorSigna
       occurrenceCount,
       severity: occurrenceCount >= 2 ? "HIGH" : prior.severity,
       resolvedStatus: "ACTIVE",
-      metadata: { ...prior.metadata, observedSignalIds: [...prior.metadata.observedSignalIds, current.id] },
+      metadata: {
+        ...prior.metadata,
+        observedSignalIds: [...prior.metadata.observedSignalIds, current.id],
+        academicSourceIds: unique([...(prior.metadata.academicSourceIds ?? []), ...(current.academicSourceId ? [current.academicSourceId] : [])]),
+        academicSectionIds: unique([...(prior.metadata.academicSectionIds ?? []), ...(current.academicSectionId ? [current.academicSectionId] : [])]),
+        remediationMethods: unique([...(prior.metadata.remediationMethods ?? []), ...(current.remediationMethod ? [current.remediationMethod] : [])]),
+      },
     });
   }
   return [...byId.values()].sort((left, right) => left.firstObservedAt - right.firstObservedAt);
 }
 
 function template(concept: ReviewConcept) {
+  if (concept === "ENCAPSULATION_PDU_CONFUSION") {
+    return {
+      reviewType: "MULTIPLE_CHOICE" as const,
+      title: "Associer couche et unité de données",
+      prompt: "Dans l’encapsulation présentée par le cours, quelle unité correspond à la couche liaison ?",
+      choices: [{ id: "frame", label: "Trame" }, { id: "segment", label: "Segment" }, { id: "message", label: "Message" }],
+      expectedResponse: "frame",
+      acceptedKeywords: ["trame", "frame"],
+      hint: "La page 20 place cette unité après le datagramme ou paquet.",
+      successFeedback: "Exact. La couche liaison manipule la trame dans le schéma étudié.",
+      retryFeedback: "Reconstitue l’ordre message, segment, datagramme ou paquet, puis trame.",
+    };
+  }
+  if (concept === "OSI_LAYER_MISCLASSIFICATION") {
+    return {
+      reviewType: "MULTIPLE_CHOICE" as const,
+      title: "Situer IP dans le modèle OSI",
+      prompt: "À quelle couche du modèle OSI rattache-t-on principalement le protocole IP ?",
+      choices: [{ id: "network", label: "Couche réseau" }, { id: "transport", label: "Couche transport" }, { id: "physical", label: "Couche physique" }],
+      expectedResponse: "network",
+      acceptedKeywords: ["réseau", "network", "couche 3"],
+      hint: "Cette couche choisit le chemin logique entre réseaux.",
+      successFeedback: "Exact. IP relève principalement de la couche réseau.",
+      retryFeedback: "Repars du rôle d’IP : adresser et acheminer des paquets entre réseaux.",
+    };
+  }
+  if (concept === "TCP_UDP_CONFUSION") {
+    return {
+      reviewType: "MULTIPLE_CHOICE" as const,
+      title: "Choisir TCP ou UDP",
+      prompt: "Quel protocole de transport fournit une livraison ordonnée avec contrôle de connexion ?",
+      choices: [{ id: "tcp", label: "TCP" }, { id: "udp", label: "UDP" }, { id: "arp", label: "ARP" }],
+      expectedResponse: "tcp",
+      acceptedKeywords: ["tcp"],
+      hint: "Cherche le protocole orienté connexion.",
+      successFeedback: "Exact. TCP fournit une livraison ordonnée et contrôlée.",
+      retryFeedback: "Distingue le protocole orienté connexion du transport sans connexion.",
+    };
+  }
   if (concept === "MISSED_DATA_ANOMALY") {
     return {
       reviewType: "SHORT_TEXT" as const,
@@ -217,6 +279,9 @@ export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPatte
     const prior = byId.get(id);
     const sourceEvidenceIds = unique(conceptPatterns.flatMap((pattern) => pattern.sourceEvidenceIds));
     const errorPatternIds = conceptPatterns.map((pattern) => pattern.id);
+    const academicSourceIds = unique(conceptPatterns.flatMap((pattern) => pattern.metadata.academicSourceIds ?? []));
+    const academicSectionIds = unique(conceptPatterns.flatMap((pattern) => pattern.metadata.academicSectionIds ?? []));
+    const remediationMethods = unique(conceptPatterns.flatMap((pattern) => pattern.metadata.remediationMethods ?? []));
     if (!prior) {
       const content = template(concept);
       byId.set(id, {
@@ -237,7 +302,12 @@ export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPatte
         nextReviewAt: now,
         whyDue: competencyId === "EXCEL_CSV_IMPORT"
           ? "À revoir maintenant car une difficulté a été observée dans ta mission Excel."
+          : competencyId === "NETWORK_FUNDAMENTALS" || competencyId === "OSI_TCP_IP_REASONING"
+          ? "À revoir maintenant car une difficulté a été observée dans ton quiz de réseau."
           : "À revoir maintenant car une difficulté a été observée dans ton scénario professionnel.",
+        academicSourceIds,
+        academicSectionIds,
+        remediationMethods,
         sourceClassification: "PERSONAL",
       });
       continue;
@@ -247,6 +317,9 @@ export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPatte
       ...prior,
       errorPatternIds: unique([...prior.errorPatternIds, ...errorPatternIds]),
       sourceEvidenceIds: unique([...prior.sourceEvidenceIds, ...sourceEvidenceIds]),
+      academicSourceIds: unique([...(prior.academicSourceIds ?? []), ...academicSourceIds]),
+      academicSectionIds: unique([...(prior.academicSectionIds ?? []), ...academicSectionIds]),
+      remediationMethods: unique([...(prior.remediationMethods ?? []), ...remediationMethods]),
       ...(hasNewSource ? { dueAt: Math.min(prior.dueAt, now), nextReviewAt: Math.min(prior.nextReviewAt, now), status: "DUE" as const, whyDue: "À revoir maintenant car une nouvelle difficulté a été observée." } : {}),
     });
   }

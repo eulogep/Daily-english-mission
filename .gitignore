@@ -40,7 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-local-*
+/local-*
 .claude
 .z-ai-config
 *.log
@@ -93,7 +93,28 @@ out/
 
 # Local agent outputs that may expose paths
 .agent/private/
+/.agent/reports/
 
 # Python caches
 __pycache__/
 *.py[cod]
+
+# Personal baseline data
+baseline/
+
+# TES Minimal — local agent session data (not versioned)
+.token-efficiency/SESSION_STATE.md
+.token-efficiency/metrics.jsonl
+
+# TES backup
+AGENTS.md.pre-tes-backup
+
+# Temporary TES extraction
+_tes_extract_tmp/
+
+# Local complex-document tooling and derived extraction cache
+/.venv-docling/
+/.document-cache/
+
+# Third-party Excel learning resources — personal learning only
+/Ressource Formation excel/

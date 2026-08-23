@@ -1,0 +1,226 @@
+import type { SourceRecord } from "../source-engine/types";
+import type { AcademicWorkspaceRegistry } from "./types";
+
+const sourceBase = {
+  schemaVersion: 1 as const,
+  materialKind: "ORIGINAL_SOURCE" as const,
+  domain: "Informatique",
+  subject: "Réseaux",
+  classification: "ACADEMIC_PERSONAL_USE" as const,
+  origin: "Cours académique local",
+  author: null,
+  publisher: null,
+  createdAt: null,
+  language: "fr",
+  licenseStatus: "UNKNOWN" as const,
+  copyrightStatus: "UNKNOWN" as const,
+  trust: { authority: "UNKNOWN" as const, verification: "PARTIAL" as const, pedagogicalRelevance: "HIGH" as const },
+  freshness: "UNKNOWN" as const,
+  status: "PARTIALLY_VERIFIED" as const,
+  tags: ["réseau", "académique", "usage personnel"],
+  competencyIds: ["NETWORK_FUNDAMENTALS", "OSI_TCP_IP_REASONING"] as Array<"NETWORK_FUNDAMENTALS" | "OSI_TCP_IP_REASONING">,
+  missionIds: ["ACADEMIC-NETWORKING-PILOT-QUIZ"],
+};
+
+const sources: SourceRecord[] = [
+  {
+    ...sourceBase,
+    id: "ACADEMIC-NETWORK-REVISION-001",
+    title: "Réseau informatique — révision de partiel",
+    sourceType: "DOCX",
+    originalPathOrReference: "cours esiea/Reseau Informatique/Réseau informatique.docx",
+    updatedAt: "2023-12-16T16:41:00",
+    conceptIds: ["OSI_MODEL", "NETWORK_PROTOCOLS", "TCP_UDP"],
+    notes: [
+      "Binaire local ignoré par Git; seule cette métadonnée est intégrée.",
+      "Extraction XML DOCX locale bornée à 149 paragraphes; aucune copie intégrale.",
+      "SHA-256: 439D46AFF33C51173C2A9A1414D0985A185F07005685950B80F6B0A5B7650A45",
+    ],
+    provenance: {
+      catalogReference: "knowledge-inventory.csv",
+      extractedFields: ["title", "format", "relative path", "modified date", "checksum", "bounded paragraph structure"],
+      inferredFields: ["subject", "pedagogical relevance"],
+    },
+  },
+  {
+    ...sourceBase,
+    id: "ACADEMIC-NETWORK-CH01-001",
+    title: "Introduction INF3050 — chapitre 1",
+    sourceType: "PDF",
+    originalPathOrReference: "cours esiea/Reseau Informatique/cours/CH01_Introduction_INF3050.pdf",
+    updatedAt: "2023-10-09T13:06:33",
+    status: "PARTIALLY_VERIFIED",
+    conceptIds: ["OSI_REFERENCE_MODEL", "TCP_IP_STACK", "LAYER_RESPONSIBILITIES", "NETWORK_ENCAPSULATION"],
+    missionIds: ["ACADEMIC-NETWORKING-PDF-QUIZ"],
+    notes: [
+      "TEXT_PDF: 42 pages, 9 781 caractères extraits localement avec pdfjs-dist 6.2.108.",
+      "Ingestion bornée aux pages 14–20; les autres pages ne sont pas incorporées.",
+      "Le texte extrait est une représentation dérivée; le PDF original reste canonique et ignoré par Git.",
+      "SHA-256: 61BA6E1C456D34BB098F125B1BCC6DC9A85C10C7E4E8F267BFB1A4F55F1C784B",
+    ],
+    provenance: {
+      catalogReference: "knowledge-inventory.csv",
+      extractedFields: ["title", "format", "relative path", "modified date", "checksum"],
+      inferredFields: ["subject"],
+    },
+  },
+];
+
+export const academicWorkspaceRegistry: AcademicWorkspaceRegistry = {
+  subjects: [
+    { id: "SUBJECT-NETWORKING", slug: "networking", title: "Réseaux", description: "Modèles en couches, adressage et protocoles réseau.", status: "ACTIVE", competencyIds: ["NETWORK_FUNDAMENTALS", "OSI_TCP_IP_REASONING"], moduleIds: ["MODULE-NETWORK-FUNDAMENTALS"] },
+    { id: "SUBJECT-SYSTEM-ADMIN", slug: "system-administration", title: "Administration système", description: "Candidat détecté dans l’inventaire; contenu non encore validé.", status: "PLANNED", competencyIds: [], moduleIds: [] },
+    { id: "SUBJECT-CYBERSECURITY", slug: "cybersecurity", title: "Cybersécurité", description: "Candidat détecté dans l’inventaire; contenu non encore validé.", status: "PLANNED", competencyIds: [], moduleIds: [] },
+    { id: "SUBJECT-DATABASES", slug: "databases", title: "Bases de données", description: "Candidat détecté dans l’inventaire; contenu non encore validé.", status: "PLANNED", competencyIds: [], moduleIds: [] },
+    { id: "SUBJECT-VIRTUALIZATION", slug: "virtualization", title: "Virtualisation", description: "Espace prévu; aucune source validée dans ce ticket.", status: "PLANNED", competencyIds: [], moduleIds: [] },
+    { id: "SUBJECT-EXCEL-DATA", slug: "excel-data", title: "Excel / Données", description: "Capacités déjà disponibles dans les missions; ingestion académique dédiée planifiée.", status: "PLANNED", competencyIds: ["EXCEL_CSV_IMPORT"], moduleIds: [] },
+    { id: "SUBJECT-TECHNICAL-ENGLISH", slug: "technical-english", title: "Anglais technique", description: "Capacité existante; organisation académique par modules planifiée.", status: "PLANNED", competencyIds: ["TECHNICAL_ENGLISH_EXPLANATION"], moduleIds: [] },
+  ],
+  modules: [
+    { id: "MODULE-NETWORK-FUNDAMENTALS", subjectId: "SUBJECT-NETWORKING", title: "Fondamentaux OSI et TCP/IP", description: "Comprendre les rôles des couches et différencier les principaux protocoles.", status: "ACTIVE", sourceIds: sources.map((source) => source.id), sectionIds: ["SECTION-OSI-PROTOCOLS", "SECTION-PDF-REFERENCE-MODELS", "SECTION-PDF-ENCAPSULATION"] },
+  ],
+  sources,
+  ingestions: [
+    { id: "INGEST-NETWORK-DOCX-001", sourceId: "ACADEMIC-NETWORK-REVISION-001", format: "DOCX", status: "PARTIALLY_EXTRACTED", extractionMethod: "DOCX_XML_LOCAL", extractedSectionIds: ["SECTION-OSI-PROTOCOLS"], failureReason: null, binaryCommitted: false },
+    { id: "INGEST-NETWORK-PDF-001", sourceId: "ACADEMIC-NETWORK-CH01-001", format: "PDF", status: "PARTIALLY_EXTRACTED", extractionMethod: "PDFJS_DIST_LOCAL", extractedSectionIds: ["SECTION-PDF-REFERENCE-MODELS", "SECTION-PDF-ENCAPSULATION"], failureReason: null, binaryCommitted: false },
+  ],
+  sections: [
+    {
+      materialKind: "DERIVED_MATERIAL",
+      canonical: false,
+      id: "SECTION-OSI-PROTOCOLS",
+      moduleId: "MODULE-NETWORK-FUNDAMENTALS",
+      sourceId: "ACADEMIC-NETWORK-REVISION-001",
+      title: "Modèle OSI et protocoles réseau",
+      order: 1,
+      sourceReference: "Réseau informatique.docx — paragraphes 1 à 92 (questions de révision)",
+      summary: [
+        "Le modèle OSI sépare les communications réseau en couches ayant chacune un rôle.",
+        "La couche réseau porte notamment l’adressage logique et l’acheminement avec IP.",
+        "La couche transport différencie notamment TCP, orienté connexion, et UDP, sans connexion.",
+        "ARP, ICMP et DHCP répondent à des besoins distincts d’adressage, diagnostic et configuration.",
+      ],
+      conceptIds: ["OSI_MODEL", "NETWORK_PROTOCOLS", "TCP_UDP"],
+      verificationStatus: "VERIFIED_FROM_LOCAL_EXTRACTION",
+    },
+    {
+      materialKind: "DERIVED_MATERIAL",
+      canonical: false,
+      id: "SECTION-PDF-REFERENCE-MODELS",
+      moduleId: "MODULE-NETWORK-FUNDAMENTALS",
+      sourceId: "ACADEMIC-NETWORK-CH01-001",
+      title: "Modèles de référence et responsabilités des couches",
+      order: 2,
+      sourceReference: "CH01_Introduction_INF3050.pdf — pages 14 à 19",
+      summary: [
+        "Le cours présente les modèles OSI et TCP/IP comme des décompositions en couches d’un problème réseau complexe.",
+        "La pile Internet associe les applications à la couche application, TCP et UDP au transport, et IP à la couche réseau.",
+        "La liaison traite les échanges entre éléments voisins, tandis que la couche physique transporte les bits.",
+        "Les fonctions de présentation et de session du modèle OSI ne sont pas des couches distinctes de la pile Internet présentée.",
+      ],
+      conceptIds: ["OSI_REFERENCE_MODEL", "TCP_IP_STACK", "LAYER_RESPONSIBILITIES"],
+      verificationStatus: "VERIFIED_FROM_LOCAL_EXTRACTION",
+    },
+    {
+      materialKind: "DERIVED_MATERIAL",
+      canonical: false,
+      id: "SECTION-PDF-ENCAPSULATION",
+      moduleId: "MODULE-NETWORK-FUNDAMENTALS",
+      sourceId: "ACADEMIC-NETWORK-CH01-001",
+      title: "Encapsulation dans la pile réseau",
+      order: 3,
+      sourceReference: "CH01_Introduction_INF3050.pdf — page 20",
+      summary: [
+        "Le schéma présente le passage d’un message dans les couches de la source vers la destination.",
+        "Chaque couche ajoute ou interprète des informations de contrôle adaptées à son rôle.",
+        "Les unités montrées incluent le segment, le datagramme ou paquet, puis la trame.",
+      ],
+      conceptIds: ["NETWORK_ENCAPSULATION", "LAYER_RESPONSIBILITIES"],
+      verificationStatus: "VERIFIED_FROM_LOCAL_EXTRACTION",
+    },
+  ],
+  concepts: [
+    { materialKind: "DERIVED_MATERIAL", canonical: false, id: "OSI_MODEL", label: "Modèle OSI", definition: "Modèle en couches qui sépare les fonctions d’une communication réseau.", sourceIds: ["ACADEMIC-NETWORK-REVISION-001"], sectionIds: ["SECTION-OSI-PROTOCOLS"], status: "VALIDATED" },
+    { materialKind: "DERIVED_MATERIAL", canonical: false, id: "NETWORK_PROTOCOLS", label: "Protocoles réseau", definition: "Rôles complémentaires d’IP, ARP, ICMP et DHCP dans un réseau.", sourceIds: ["ACADEMIC-NETWORK-REVISION-001"], sectionIds: ["SECTION-OSI-PROTOCOLS"], status: "VALIDATED" },
+    { materialKind: "DERIVED_MATERIAL", canonical: false, id: "TCP_UDP", label: "TCP et UDP", definition: "Deux protocoles de transport aux garanties différentes.", sourceIds: ["ACADEMIC-NETWORK-REVISION-001"], sectionIds: ["SECTION-OSI-PROTOCOLS"], status: "VALIDATED" },
+    { materialKind: "DERIVED_MATERIAL", canonical: false, id: "OSI_REFERENCE_MODEL", label: "Modèle de référence OSI", definition: "Décomposition normalisée des fonctions réseau en sept couches.", sourceIds: ["ACADEMIC-NETWORK-CH01-001"], sectionIds: ["SECTION-PDF-REFERENCE-MODELS"], status: "VALIDATED" },
+    { materialKind: "DERIVED_MATERIAL", canonical: false, id: "TCP_IP_STACK", label: "Pile TCP/IP", definition: "Organisation en couches des protocoles utilisés par Internet.", sourceIds: ["ACADEMIC-NETWORK-CH01-001"], sectionIds: ["SECTION-PDF-REFERENCE-MODELS"], status: "VALIDATED" },
+    { materialKind: "DERIVED_MATERIAL", canonical: false, id: "LAYER_RESPONSIBILITIES", label: "Responsabilités des couches", definition: "Rôles distincts de l’application, du transport, du réseau, de la liaison et du physique.", sourceIds: ["ACADEMIC-NETWORK-CH01-001"], sectionIds: ["SECTION-PDF-REFERENCE-MODELS", "SECTION-PDF-ENCAPSULATION"], status: "VALIDATED" },
+    { materialKind: "DERIVED_MATERIAL", canonical: false, id: "NETWORK_ENCAPSULATION", label: "Encapsulation réseau", definition: "Ajout progressif d’informations de contrôle lors du passage entre couches.", sourceIds: ["ACADEMIC-NETWORK-CH01-001"], sectionIds: ["SECTION-PDF-ENCAPSULATION"], status: "VALIDATED" },
+  ],
+  quizzes: [
+    {
+      id: "ACADEMIC-NETWORKING-PILOT-QUIZ",
+      version: 1,
+      title: "Quiz ancré — OSI et TCP/IP",
+      subjectId: "SUBJECT-NETWORKING",
+      moduleId: "MODULE-NETWORK-FUNDAMENTALS",
+      competencyIds: ["NETWORK_FUNDAMENTALS", "OSI_TCP_IP_REASONING"],
+      maxCompetencyState: "PRACTICED",
+      sectionCoverage: "FULL",
+      sourceBundle: {
+        id: "SOURCE-BUNDLE-OSI-PROTOCOLS",
+        sourceIds: ["ACADEMIC-NETWORK-REVISION-001"],
+        sectionIds: ["SECTION-OSI-PROTOCOLS"],
+        pageRanges: [],
+        verificationStatus: "VERIFIED",
+      },
+      questions: [
+        { id: "osi-ip-layer", prompt: "À quelle couche du modèle OSI rattache-t-on principalement IP ?", responseType: "MULTIPLE_CHOICE", choices: [{ id: "network", label: "Réseau" }, { id: "transport", label: "Transport" }, { id: "physical", label: "Physique" }], expectedResponse: "network", successFeedback: "Correct : IP relève principalement de la couche réseau.", retryFeedback: "Revois la couche responsable de l’adressage logique et de l’acheminement.", hint: "C’est la couche 3 du modèle OSI.", sourceId: "ACADEMIC-NETWORK-REVISION-001", sectionId: "SECTION-OSI-PROTOCOLS", conceptIds: ["OSI_MODEL", "NETWORK_PROTOCOLS"], generationMethod: "MANUAL_GROUNDED", verificationStatus: "VERIFIED" },
+        { id: "tcp-property", prompt: "Quel protocole de transport fournit une livraison ordonnée et orientée connexion ?", responseType: "MULTIPLE_CHOICE", choices: [{ id: "tcp", label: "TCP" }, { id: "udp", label: "UDP" }, { id: "icmp", label: "ICMP" }], expectedResponse: "tcp", successFeedback: "Correct : TCP est orienté connexion et garantit l’ordre.", retryFeedback: "Distingue le transport orienté connexion du transport sans connexion.", hint: "Il utilise un établissement de connexion.", sourceId: "ACADEMIC-NETWORK-REVISION-001", sectionId: "SECTION-OSI-PROTOCOLS", conceptIds: ["TCP_UDP"], generationMethod: "MANUAL_GROUNDED", verificationStatus: "VERIFIED" },
+        { id: "dhcp-role", prompt: "Quel protocole attribue automatiquement des paramètres IP à un poste ?", responseType: "SHORT_TEXT", expectedResponse: "DHCP", acceptedKeywords: ["dhcp"], successFeedback: "Correct : DHCP fournit automatiquement la configuration réseau.", retryFeedback: "Cherche le protocole de configuration dynamique des hôtes.", hint: "Son nom contient Dynamic Host Configuration.", sourceId: "ACADEMIC-NETWORK-REVISION-001", sectionId: "SECTION-OSI-PROTOCOLS", conceptIds: ["NETWORK_PROTOCOLS"], generationMethod: "MANUAL_GROUNDED", verificationStatus: "VERIFIED" },
+      ],
+    },
+    {
+      id: "ACADEMIC-NETWORKING-PDF-REFERENCE-MODELS",
+      version: 2,
+      title: "Quiz de section — Modèles OSI et TCP/IP",
+      subjectId: "SUBJECT-NETWORKING",
+      moduleId: "MODULE-NETWORK-FUNDAMENTALS",
+      competencyIds: ["NETWORK_FUNDAMENTALS", "OSI_TCP_IP_REASONING"],
+      maxCompetencyState: "PRACTICED",
+      mode: "STANDARD",
+      sectionCoverage: "FULL",
+      sourceBundle: {
+        id: "SOURCE-BUNDLE-PDF-REFERENCE-MODELS",
+        sourceIds: ["ACADEMIC-NETWORK-CH01-001"],
+        sectionIds: ["SECTION-PDF-REFERENCE-MODELS"],
+        pageRanges: [{ sourceId: "ACADEMIC-NETWORK-CH01-001", pageStart: 14, pageEnd: 19 }],
+        verificationStatus: "VERIFIED",
+      },
+      questions: [
+        { id: "pdf-ip-layer", prompt: "Dans la pile présentée par le cours, à quelle couche est associé IP ?", responseType: "MULTIPLE_CHOICE", choices: [{ id: "network", label: "Réseau" }, { id: "transport", label: "Transport" }, { id: "link", label: "Liaison" }], expectedResponse: "network", successFeedback: "Correct : la page 18 associe IP à la couche réseau.", retryFeedback: "Relis le rôle de routage des datagrammes à la page 18.", hint: "Cette couche relie la source à la destination par routage.", retrievalPrompt: "Sans revoir le support : quelle couche de la pile prend en charge IP ?", sourceId: "ACADEMIC-NETWORK-CH01-001", pageStart: 18, pageEnd: 18, sectionId: "SECTION-PDF-REFERENCE-MODELS", conceptIds: ["TCP_IP_STACK", "LAYER_RESPONSIBILITIES"], generationMethod: "MANUAL_GROUNDED", verificationStatus: "VERIFIED" },
+        { id: "pdf-transport-protocols", prompt: "Quels protocoles la page 18 rattache-t-elle à la couche transport ?", responseType: "SHORT_TEXT", expectedResponse: "TCP et UDP", acceptedKeywords: ["tcp et udp", "tcp, udp", "tcp udp"], successFeedback: "Correct : TCP et UDP sont les exemples de la couche transport.", retryFeedback: "Cherche les deux protocoles placés sous « Transport » page 18.", hint: "Leurs initiales commencent par T et U.", retrievalPrompt: "De mémoire, cite les deux protocoles présentés dans la couche transport.", sourceId: "ACADEMIC-NETWORK-CH01-001", pageStart: 18, pageEnd: 18, sectionId: "SECTION-PDF-REFERENCE-MODELS", conceptIds: ["TCP_IP_STACK", "LAYER_RESPONSIBILITIES"], generationMethod: "MANUAL_GROUNDED", verificationStatus: "VERIFIED" },
+      ],
+    },
+    {
+      id: "ACADEMIC-NETWORKING-PDF-ENCAPSULATION",
+      version: 1,
+      title: "Quiz de section — Encapsulation réseau",
+      subjectId: "SUBJECT-NETWORKING",
+      moduleId: "MODULE-NETWORK-FUNDAMENTALS",
+      competencyIds: ["NETWORK_FUNDAMENTALS", "OSI_TCP_IP_REASONING"],
+      maxCompetencyState: "PRACTICED",
+      mode: "STANDARD",
+      sectionCoverage: "FULL",
+      sourceBundle: {
+        id: "SOURCE-BUNDLE-PDF-ENCAPSULATION-P20",
+        sourceIds: ["ACADEMIC-NETWORK-CH01-001"],
+        sectionIds: ["SECTION-PDF-ENCAPSULATION"],
+        pageRanges: [{ sourceId: "ACADEMIC-NETWORK-CH01-001", pageStart: 20, pageEnd: 20 }],
+        verificationStatus: "VERIFIED",
+      },
+      questions: [
+        { id: "encapsulation-transport-unit", prompt: "Quelle unité de données est associée à la couche transport dans le schéma d’encapsulation ?", responseType: "MULTIPLE_CHOICE", choices: [{ id: "segment", label: "Segment" }, { id: "frame", label: "Trame" }, { id: "message", label: "Message" }], expectedResponse: "segment", successFeedback: "Correct : la page 20 associe le segment au transport.", retryFeedback: "Observe l’unité située entre le message applicatif et le datagramme.", hint: "Cette unité commence par « seg ».", retrievalPrompt: "Support fermé : quelle unité nomme les données au niveau transport ?", sourceId: "ACADEMIC-NETWORK-CH01-001", pageStart: 20, pageEnd: 20, sectionId: "SECTION-PDF-ENCAPSULATION", conceptIds: ["NETWORK_ENCAPSULATION"], generationMethod: "MANUAL_GROUNDED", verificationStatus: "VERIFIED" },
+        { id: "encapsulation-network-unit", prompt: "Quelle unité la page 20 associe-t-elle à la couche réseau ?", responseType: "MULTIPLE_CHOICE", choices: [{ id: "datagram", label: "Datagramme ou paquet" }, { id: "segment", label: "Segment" }, { id: "frame", label: "Trame" }], expectedResponse: "datagram", successFeedback: "Correct : le réseau manipule le datagramme ou paquet dans ce schéma.", retryFeedback: "Cette unité se situe entre le segment et la trame.", hint: "Le cours emploie aussi le mot « paquet ».", retrievalPrompt: "De mémoire, quelle unité se trouve entre segment et trame ?", sourceId: "ACADEMIC-NETWORK-CH01-001", pageStart: 20, pageEnd: 20, sectionId: "SECTION-PDF-ENCAPSULATION", conceptIds: ["NETWORK_ENCAPSULATION"], generationMethod: "MANUAL_GROUNDED", verificationStatus: "VERIFIED" },
+        { id: "encapsulation-link-unit", prompt: "Quelle unité de données est associée à la couche liaison dans le schéma d’encapsulation ?", responseType: "MULTIPLE_CHOICE", choices: [{ id: "frame", label: "Trame" }, { id: "segment", label: "Segment" }, { id: "message", label: "Message" }], expectedResponse: "frame", successFeedback: "Correct : le schéma page 20 associe la trame à la liaison.", retryFeedback: "Observe l’unité placée au niveau de la liaison page 20.", hint: "Elle transporte le paquet sur un lien local.", retrievalPrompt: "Après avoir fermé le support, nomme l’unité de la couche liaison.", sourceId: "ACADEMIC-NETWORK-CH01-001", pageStart: 20, pageEnd: 20, sectionId: "SECTION-PDF-ENCAPSULATION", conceptIds: ["NETWORK_ENCAPSULATION", "LAYER_RESPONSIBILITIES"], generationMethod: "MANUAL_GROUNDED", verificationStatus: "VERIFIED" },
+      ],
+    },
+  ],
+};
+
+export const networkingQuiz = academicWorkspaceRegistry.quizzes[0];
+export const networkingSection = academicWorkspaceRegistry.sections[0];
+export const networkingPdfQuiz = academicWorkspaceRegistry.quizzes[1];
+export const networkingPdfSectionQuizzes = academicWorkspaceRegistry.quizzes.slice(1);
+export const networkingPdfSections = academicWorkspaceRegistry.sections.filter((section) => section.sourceId === "ACADEMIC-NETWORK-CH01-001");

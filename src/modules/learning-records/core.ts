@@ -16,6 +16,7 @@ function practicedRationale(competencyId: CompetencyId) {
   if (["DATA_ANOMALY_IDENTIFICATION", "FACT_VS_ASSUMPTION", "PROFESSIONAL_STATUS_UPDATE", "ACTIONABLE_NEXT_STEP"].includes(competencyId)) {
     return "Pratiquée dans un scénario professionnel guidé avec preuve locale.";
   }
+  if (["NETWORK_FUNDAMENTALS", "OSI_TCP_IP_REASONING"].includes(competencyId)) return "Pratiquée dans un quiz académique relié à une section de cours locale.";
   return rationale.PRACTICED;
 }
 
@@ -136,6 +137,8 @@ export function rebuildCompetencies(evidence: EvidenceRecord[], competencyIds: C
   "FACT_VS_ASSUMPTION",
   "PROFESSIONAL_STATUS_UPDATE",
   "ACTIONABLE_NEXT_STEP",
+  "NETWORK_FUNDAMENTALS",
+  "OSI_TCP_IP_REASONING",
 ]) {
   return competencyIds.map((competencyId) => deriveCompetencyRecord(competencyId, evidence));
 }

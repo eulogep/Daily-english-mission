@@ -1,0 +1,2 @@
+# T-0015D - local complex-document extraction
+docling==2.121.0
