@@ -158,11 +158,12 @@ test("incomplete technical response creates conservative error memory but no pre
   assert.deepEqual(generateReviewItems([], patterns, 3_000), []);
 });
 
-test("rebuilding Excel competency does not erase technical English competency", () => {
+test("rebuilding the expanded competency map preserves Technical English without inventing professional progress", () => {
   const technicalEvidence = technicalEnglishEvidenceFromAttempt(completedAttempt());
   const competencies = rebuildCompetencies([technicalEvidence]);
-  assert.equal(competencies.length, 2);
+  assert.equal(competencies.length, 6);
   assert.equal(competencies.find((item: { competencyId: string }) => item.competencyId === "TECHNICAL_ENGLISH_EXPLANATION").status, "PRACTICED");
+  assert.equal(competencies.find((item: { competencyId: string }) => item.competencyId === "DATA_ANOMALY_IDENTIFICATION").status, "NOT_SEEN");
 });
 
 test("valid English technical explanation confirms language, content and competency evidence", () => {

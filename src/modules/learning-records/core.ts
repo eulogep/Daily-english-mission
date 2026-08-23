@@ -12,7 +12,11 @@ const rationale: Record<CompetencyStatus, string> = {
 };
 
 function practicedRationale(competencyId: CompetencyId) {
-  return competencyId === "TECHNICAL_ENGLISH_EXPLANATION" ? "Pratiquée lors d’une explication technique guidée en anglais." : rationale.PRACTICED;
+  if (competencyId === "TECHNICAL_ENGLISH_EXPLANATION") return "Pratiquée lors d’une explication technique guidée en anglais.";
+  if (["DATA_ANOMALY_IDENTIFICATION", "FACT_VS_ASSUMPTION", "PROFESSIONAL_STATUS_UPDATE", "ACTIONABLE_NEXT_STEP"].includes(competencyId)) {
+    return "Pratiquée dans un scénario professionnel guidé avec preuve locale.";
+  }
+  return rationale.PRACTICED;
 }
 
 export interface EvidenceRepository {
@@ -125,6 +129,13 @@ export function reconcileExcelAttempt(existing: EvidenceRecord[], attempt: Missi
   return { evidence, competency: deriveCompetencyRecord("EXCEL_CSV_IMPORT", evidence) };
 }
 
-export function rebuildCompetencies(evidence: EvidenceRecord[], competencyIds: CompetencyId[] = ["EXCEL_CSV_IMPORT", "TECHNICAL_ENGLISH_EXPLANATION"]) {
+export function rebuildCompetencies(evidence: EvidenceRecord[], competencyIds: CompetencyId[] = [
+  "EXCEL_CSV_IMPORT",
+  "TECHNICAL_ENGLISH_EXPLANATION",
+  "DATA_ANOMALY_IDENTIFICATION",
+  "FACT_VS_ASSUMPTION",
+  "PROFESSIONAL_STATUS_UPDATE",
+  "ACTIONABLE_NEXT_STEP",
+]) {
   return competencyIds.map((competencyId) => deriveCompetencyRecord(competencyId, evidence));
 }

@@ -24,8 +24,10 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
   const viewed = useLearningRecordStore((state) => state.recordEvidenceViewed);
   const isTechnicalEnglish = record.evidenceType === "AUDIO_RESPONSE" || record.evidenceType === "TEXT_RESPONSE";
   const isDeepMastery = record.evidenceType === "DEEP_MASTERY_SESSION";
+  const isProfessionalScenario = record.evidenceType === "PROFESSIONAL_SCENARIO";
   const deepMasteryCompleted = isDeepMastery && record.evaluationResult.missionCompletion === "VALID";
-  const completed = record.evidenceType === "MISSION_COMPLETION" || deepMasteryCompleted;
+  const professionalCompleted = isProfessionalScenario && record.evaluationResult.missionCompletion === "VALID";
+  const completed = record.evidenceType === "MISSION_COMPLETION" || deepMasteryCompleted || professionalCompleted;
   const reviewResult = record.evidenceType === "REVIEW_RESULT";
   const reviewCorrect = record.evaluationResult.outcome === "REVIEW_SUCCESS";
   const transcriptAvailable = record.evaluationResult.transcriptionStatus === "MANUAL_AVAILABLE";
@@ -41,17 +43,23 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
     if (next) viewed(record.id);
   }
 
-  const eyebrow = isDeepMastery
+  const eyebrow = isProfessionalScenario
+    ? "Scénario professionnel — Anomalie industrielle"
+    : isDeepMastery
     ? "Maîtrise profonde — Diagnostic CSV"
     : isTechnicalEnglish
     ? "Technical English"
     : reviewResult ? "Révision Excel — Import CSV" : "Excel CSV Foundations — Niveau 1";
-  const title = isDeepMastery
+  const title = isProfessionalScenario
+    ? professionalCompleted ? "Situation professionnelle traitée" : "Situation professionnelle commencée"
+    : isDeepMastery
     ? deepMasteryCompleted ? "Session de maîtrise terminée" : "Session de maîtrise commencée"
     : isTechnicalEnglish
     ? "Explication du diagnostic CSV"
     : reviewResult ? "Révision terminée" : completed ? "Mission terminée" : "Tentative en cours";
-  const badge = isDeepMastery
+  const badge = isProfessionalScenario
+    ? professionalCompleted ? "Pratique professionnelle validée" : "Analyse en cours"
+    : isDeepMastery
     ? record.evaluationResult.outcome === "SUCCESSFUL_TRANSFER" ? "Transfert autonome validé" : deepMasteryCompleted ? "Pratique guidée validée" : "Session commencée"
     : isTechnicalEnglish
     ? record.evidenceType === "AUDIO_RESPONSE" ? "Audio enregistré" : "Réponse écrite"
@@ -71,10 +79,20 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
       <CardContent className="space-y-5">
         <div>
           <p className="text-sm font-semibold">Compétence</p>
-          <p className="mt-1 text-sm text-slate-600">{isTechnicalEnglish ? "Explication technique en anglais" : "Import CSV dans Excel"}</p>
+          <p className="mt-1 text-sm text-slate-600">{isProfessionalScenario ? "Analyse et communication professionnelles" : isTechnicalEnglish ? "Explication technique en anglais" : "Import CSV dans Excel"}</p>
         </div>
 
-        {isDeepMastery ? (
+        {isProfessionalScenario ? (
+          <ul className="space-y-2 text-sm text-slate-700">
+            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />Données du cas classées TRAINING_SYNTHETIC</li>
+            {Object.entries(record.evaluationResult.professionalDimensions ?? {}).map(([dimension, status]) => <li key={dimension} className="flex gap-2">{status === "VALID" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden="true" />}<span>{dimension.replaceAll("_", " ")} : {status === "VALID" ? "validé" : status?.toLowerCase()}</span></li>)}
+            <li className="flex gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />{professionalCompleted ? "État plafonné à Pratiquée pour ce scénario guidé" : "Aucune promotion avant une réalisation complète"}</li>
+            <li className="flex gap-2"><Info className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden="true" /><span>Aide de rédaction déclarée : {record.evaluationResult.assistanceMode === "NONE" ? "aucune" : record.evaluationResult.assistanceMode === "IN_APP_SCAFFOLD" ? "canevas intégré" : record.evaluationResult.assistanceMode === "EXTERNAL_AI" ? "IA externe" : "autre ou non déclarée"}</span></li>
+            {record.evaluationResult.professionalWritingEvidence === "INDEPENDENT" && <li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />Rédaction indépendante enregistrée. Le scénario reste plafonné à Pratiquée.</li>}
+            {record.evaluationResult.professionalWritingEvidence === "GUIDED" && <li className="flex gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden="true" />Rédaction guidée enregistrée : elle soutient Pratiquée, pas Démontrée.</li>}
+            {record.evaluationResult.professionalWritingEvidence === "NOT_AUTONOMOUS_EXTERNAL_AI" && <li className="flex gap-2 text-amber-800"><Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />Le texte est conservé, mais ne valide pas une rédaction professionnelle autonome.</li>}
+          </ul>
+        ) : isDeepMastery ? (
           <ul className="space-y-2 text-sm text-slate-700">
             <li className="flex gap-2">{record.evaluationResult.feynmanExplanation === "VALID" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />}Explication avec ses propres mots {record.evaluationResult.feynmanExplanation === "VALID" ? "validée" : "à compléter"}</li>
             <li className="flex gap-2">{record.evaluationResult.heldOutTransfer === "VALID" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" /> : <Circle className="mt-0.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />}Cas nouveau {record.evaluationResult.heldOutTransfer === "VALID" ? "réussi" : "non validé"}</li>
@@ -143,6 +161,10 @@ export function EvidenceWorkspace() {
 const competencyPresentation: Record<CompetencyId, { subject: string; title: string; evidenceLabel: string }> = {
   EXCEL_CSV_IMPORT: { subject: "Excel / Données", title: "Import CSV dans Excel", evidenceLabel: "Mission Excel CSV Foundations" },
   TECHNICAL_ENGLISH_EXPLANATION: { subject: "Anglais professionnel", title: "Explication technique en anglais", evidenceLabel: "Mission Technical English" },
+  DATA_ANOMALY_IDENTIFICATION: { subject: "Pratique professionnelle", title: "Identifier une anomalie de données", evidenceLabel: "Scénario professionnel industriel" },
+  FACT_VS_ASSUMPTION: { subject: "Pratique professionnelle", title: "Distinguer fait et hypothèse", evidenceLabel: "Scénario professionnel industriel" },
+  PROFESSIONAL_STATUS_UPDATE: { subject: "Communication professionnelle", title: "Rédiger un point de situation", evidenceLabel: "Scénario professionnel industriel" },
+  ACTIONABLE_NEXT_STEP: { subject: "Décision professionnelle", title: "Proposer une prochaine action", evidenceLabel: "Scénario professionnel industriel" },
 };
 
 function CompetencyCard({ competency, supporting }: { competency: Pick<CompetencyRecord, "competencyId" | "status" | "supportingEvidenceIds" | "rationale">; supporting: EvidenceRecord[] }) {
@@ -160,7 +182,7 @@ function CompetencyCard({ competency, supporting }: { competency: Pick<Competenc
 export function ProgressWorkspace() {
   const { hydrated, competencies, evidence } = useLearningRecordStore();
   if (!hydrated) return <p className="text-sm text-slate-500">Chargement de la progression locale…</p>;
-  const ids: CompetencyId[] = ["EXCEL_CSV_IMPORT", "TECHNICAL_ENGLISH_EXPLANATION"];
+  const ids: CompetencyId[] = ["EXCEL_CSV_IMPORT", "TECHNICAL_ENGLISH_EXPLANATION", "DATA_ANOMALY_IDENTIFICATION", "FACT_VS_ASSUMPTION", "PROFESSIONAL_STATUS_UPDATE", "ACTIONABLE_NEXT_STEP"];
   return <div className="space-y-6"><header><p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Ta progression</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Des compétences expliquées par leurs preuves</h1><p className="mt-2 text-slate-600">Aucun pourcentage artificiel : chaque statut vient uniquement de tes activités enregistrées.</p></header><div className="grid gap-5">{ids.map((competencyId) => {
     const competency: Pick<CompetencyRecord, "competencyId" | "status" | "supportingEvidenceIds" | "rationale"> = competencies.find((record) => record.competencyId === competencyId) ?? { competencyId, status: "NOT_SEEN", supportingEvidenceIds: [], rationale: COMPETENCY_SEMANTICS.NOT_SEEN };
     const supporting = evidence.filter((record) => competency.supportingEvidenceIds.includes(record.id));

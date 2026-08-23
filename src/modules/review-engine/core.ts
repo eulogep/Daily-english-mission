@@ -103,6 +103,52 @@ export function mergeErrorPatterns(existing: ErrorPattern[], signals: ErrorSigna
 }
 
 function template(concept: ReviewConcept) {
+  if (concept === "MISSED_DATA_ANOMALY") {
+    return {
+      reviewType: "SHORT_TEXT" as const,
+      title: "Repérer l’anomalie utile",
+      prompt: "Dans un échantillon de lots, quelle métrique compares-tu pour repérer un écart énergétique indépendant du volume produit ?",
+      expectedResponse: "Energy_kWh_per_Ton",
+      acceptedKeywords: ["energy_kwh_per_ton", "energy kwh per ton", "énergie par tonne", "kwh/t"],
+      hint: "Rapporte l’énergie au tonnage produit.",
+      successFeedback: "Exact. L’énergie par tonne rend les lots plus directement comparables.",
+      retryFeedback: "Cherche une métrique qui neutralise la différence de tonnage.",
+    };
+  }
+  if (concept === "CONFUSED_FACT_AND_ASSUMPTION" || concept === "OVERCLAIM_WITHOUT_EVIDENCE") {
+    return {
+      reviewType: "MULTIPLE_CHOICE" as const,
+      title: "Fait ou conclusion prématurée",
+      prompt: "Un lot affiche une énergie par tonne très supérieure aux lots voisins. Que peux-tu affirmer immédiatement ?",
+      choices: [
+        { id: "observed-gap", label: "L’écart est observé dans l’échantillon; sa cause reste à vérifier." },
+        { id: "machine-failure", label: "La machine est forcément en panne." },
+        { id: "site-inefficient", label: "Le site est inefficace." },
+      ],
+      expectedResponse: "observed-gap",
+      acceptedKeywords: ["écart observé", "cause reste à vérifier", "a verifier"],
+      hint: "Sépare la valeur visible de l’explication encore inconnue.",
+      successFeedback: "Exact. Le fait porte sur l’écart; la cause reste une hypothèse.",
+      retryFeedback: "Cette réponse attribue une cause sans preuve suffisante.",
+    };
+  }
+  if (concept === "NO_NEXT_ACTION") {
+    return {
+      reviewType: "MULTIPLE_CHOICE" as const,
+      title: "Prochaine action vérifiable",
+      prompt: "Après avoir repéré un KPI inhabituel, quelle action réduit le mieux l’incertitude ?",
+      choices: [
+        { id: "verify-source", label: "Vérifier la source, l’unité et le calcul." },
+        { id: "ignore", label: "Ignorer le lot." },
+        { id: "announce-failure", label: "Annoncer une panne certaine." },
+      ],
+      expectedResponse: "verify-source",
+      acceptedKeywords: ["vérifier", "source", "unité", "calcul"],
+      hint: "Choisis une action concrète qui teste la qualité de la donnée.",
+      successFeedback: "Exact. Cette vérification est proportionnée et actionnable.",
+      retryFeedback: "L’action doit réduire l’incertitude sans inventer de cause.",
+    };
+  }
   if (concept === "ENERGY_MISSING_VALUE_INSPECTION") {
     return {
       reviewType: "SHORT_TEXT" as const,
@@ -159,10 +205,15 @@ function template(concept: ReviewConcept) {
 
 export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPattern[], now: number): ReviewItem[] {
   const byId = new Map(existing.map((item) => [item.id, item]));
-  const byConcept = new Map<ReviewConcept, ErrorPattern[]>();
-  patterns.filter((pattern) => pattern.resolvedStatus !== "RESOLVED" && pattern.concept !== "TECHNICAL_CSV_EXPLANATION").forEach((pattern) => byConcept.set(pattern.concept, [...(byConcept.get(pattern.concept) ?? []), pattern]));
-  for (const [concept, conceptPatterns] of byConcept) {
-    const id = `review:EXCEL_CSV_IMPORT:${concept}`;
+  const grouped = new Map<string, ErrorPattern[]>();
+  patterns.filter((pattern) => pattern.resolvedStatus !== "RESOLVED" && pattern.concept !== "TECHNICAL_CSV_EXPLANATION").forEach((pattern) => {
+    const key = `${pattern.competencyId}:${pattern.concept}`;
+    grouped.set(key, [...(grouped.get(key) ?? []), pattern]);
+  });
+  for (const conceptPatterns of grouped.values()) {
+    const concept = conceptPatterns[0].concept;
+    const competencyId = conceptPatterns[0].competencyId;
+    const id = `review:${competencyId}:${concept}`;
     const prior = byId.get(id);
     const sourceEvidenceIds = unique(conceptPatterns.flatMap((pattern) => pattern.sourceEvidenceIds));
     const errorPatternIds = conceptPatterns.map((pattern) => pattern.id);
@@ -170,7 +221,7 @@ export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPatte
       const content = template(concept);
       byId.set(id, {
         id,
-        competencyId: "EXCEL_CSV_IMPORT",
+        competencyId,
         errorPatternIds,
         sourceEvidenceIds,
         missionId: conceptPatterns[0].missionId,
@@ -184,7 +235,9 @@ export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPatte
         successCount: 0,
         lastReviewedAt: null,
         nextReviewAt: now,
-        whyDue: "À revoir maintenant car une difficulté a été observée dans ta mission Excel.",
+        whyDue: competencyId === "EXCEL_CSV_IMPORT"
+          ? "À revoir maintenant car une difficulté a été observée dans ta mission Excel."
+          : "À revoir maintenant car une difficulté a été observée dans ton scénario professionnel.",
         sourceClassification: "PERSONAL",
       });
       continue;

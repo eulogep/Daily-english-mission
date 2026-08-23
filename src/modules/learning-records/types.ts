@@ -8,9 +8,21 @@ export const COMPETENCY_STATUSES = [
 ] as const;
 
 export type CompetencyStatus = (typeof COMPETENCY_STATUSES)[number];
-export type CompetencyId = "EXCEL_CSV_IMPORT" | "TECHNICAL_ENGLISH_EXPLANATION";
+export type CompetencyId =
+  | "EXCEL_CSV_IMPORT"
+  | "TECHNICAL_ENGLISH_EXPLANATION"
+  | "DATA_ANOMALY_IDENTIFICATION"
+  | "FACT_VS_ASSUMPTION"
+  | "PROFESSIONAL_STATUS_UPDATE"
+  | "ACTIONABLE_NEXT_STEP";
 export type VerificationStatus = "PENDING" | "VALID" | "INVALID" | "UNVERIFIED";
-export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT" | "AUDIO_RESPONSE" | "TEXT_RESPONSE" | "DEEP_MASTERY_SESSION";
+export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT" | "AUDIO_RESPONSE" | "TEXT_RESPONSE" | "DEEP_MASTERY_SESSION" | "PROFESSIONAL_SCENARIO";
+export type ProfessionalEvaluationDimension =
+  | "FACTUAL_ACCURACY"
+  | "PROBLEM_IDENTIFICATION"
+  | "UNCERTAINTY_HANDLING"
+  | "ACTIONABILITY"
+  | "COMMUNICATION_CLARITY";
 
 export const COMPETENCY_SEMANTICS: Record<CompetencyStatus, string> = {
   NOT_SEEN: "Aucune preuve significative.",
@@ -55,6 +67,11 @@ export type EvidenceEvaluation = {
   feynmanExplanation?: VerificationStatus;
   heldOutTransfer?: VerificationStatus;
   independence?: "GUIDED" | "LIMITED_HELP" | "INDEPENDENT";
+  professionalDimensions?: Partial<Record<ProfessionalEvaluationDimension, VerificationStatus>>;
+  scenarioRole?: string;
+  dataClassification?: "TRAINING_SYNTHETIC";
+  assistanceMode?: "NONE" | "IN_APP_SCAFFOLD" | "EXTERNAL_AI" | "OTHER";
+  professionalWritingEvidence?: "GUIDED" | "INDEPENDENT" | "NOT_AUTONOMOUS_EXTERNAL_AI";
 };
 
 export type EvidenceRecord = {
