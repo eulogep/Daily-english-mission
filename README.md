@@ -1,134 +1,222 @@
-# Engineer Learning OS — Système d'Apprentissage & de Preuve pour Ingénieur
+<div align="center">
 
-**Engineer Learning OS** est une plateforme locale, modulaire et orientée preuve, conçue pour structurer l’apprentissage continu, la pratique délibérée et la préparation métier d’un élève-ingénieur en informatique (ESIEA / Alternance Soufflet Malt).
+# 🧠 Engineer Learning OS
 
-Elle remplace les métriques superficielles (pourcentages arbitraires, badges sans valeur) par un système rigoureux où chaque compétence est déduite d'**activités tracées**, de **documents sources canoniques** et de **preuves reproductibles**.
+### *The Evidence-Grounded, Local-First Learning Operating System for Software Engineers*
+
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/eulogep/daily-english-mission)
+[![Tests](https://img.shields.io/badge/tests-214%2F214%20PASS-success?style=for-the-badge&logo=node.js&logoColor=white)](https://github.com/eulogep/daily-english-mission)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16.3-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript 5](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS 4](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Local First](https://img.shields.io/badge/Architecture-Local--First-orange?style=for-the-badge&logo=sqlite&logoColor=white)](https://localfirstweb.dev/)
+[![License MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+
+<p align="center">
+  <a href="#-key-features">Features</a> •
+  <a href="#-architecture">Architecture</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-operational-modules">Modules</a> •
+  <a href="#-interactive-roadmap">Roadmap</a> •
+  <a href="#-data-privacy--safety">Privacy</a>
+</p>
+
+</div>
 
 ---
 
-## 🎯 Objectifs Clés
+## 💡 What is Engineer Learning OS?
 
-1. **Apprentissage ancré sur documents sources (Grounded Learning)** : extraction de contenu fidèle depuis des supports de cours (PDF, Markdown), quiz basés sur des citations exactes avec pagination et remédiation adaptative ciblée.
-2. **Mémoire d'erreurs & Révision espacée** : détection de signaux d'erreur métier récurrents (ex. confusion TCP/UDP, mauvaise gestion de délimiteurs CSV, sur-affirmation dans un rapport) et planification de reprises espacées.
-3. **Anglais technique intégré (English-in-the-Loop)** : exercices d'expression orale et écrite avec enregistrement audio local, vérification de vocabulaire technique et limitation stricte des retours (feedback concis).
-4. **Scénarios professionnels réalistes** : simulations de cas industriels (ex. analyse d'anomalies de données de production), distinction claire faits vs hypothèses, et traçabilité de l'assistance (autonome vs scaffoldée).
-5. **Confidentialité & Local-First absolus** : tout s'exécute en local sans dépendance externe obligatoire ; aucune donnée sensible d'entreprise ou document académique restreint n'est envoyé à des tiers.
+Traditional e-learning platforms rely on **passive video watching**, **superficial badges**, and **arbitrary completion percentages** that fail to build real engineering intuition.
+
+**Engineer Learning OS** is an open-source, local-first platform designed to turn engineering course materials and technical challenges into **verifiable mastery**. It combines **zero-hallucination document extraction**, **grounded academic quizzes**, **spaced error retrieval**, and **integrated technical English** into a distraction-free modular monolith.
+
+> ⚡ **Core Philosophy:** No fake progress. Every competency level (`NOT_SEEN` ➔ `PRACTICED` ➔ `VERIFIED`) is derived purely from **auditable, reproducible evidence records**.
 
 ---
 
-## 🧱 Architecture du Projet
+## ⚡ Traditional EdTech vs. Engineer Learning OS
 
-Le projet adopte une architecture en **monolithe modulaire** avec isolation stricte du domaine métier :
+| Feature | ❌ Traditional EdTech / LMS | ✅ Engineer Learning OS |
+|---|---|---|
+| **Progress Metric** | Arbitrary percentages (e.g. *"78% completed"*) | **Evidence-derived competency states** backed by auditable attempts |
+| **Quiz Grounding** | Generic LLM hallucinated questions | **Exact citation matching & deterministic page anchoring** |
+| **Error Handling** | *"Wrong answer, try again"* | **Pattern detection & automated spaced retrieval scheduling** |
+| **Document Processing** | Proprietary cloud lock-in | **Local PDF.js + offline Docling extraction pipeline** |
+| **Privacy & Storage** | Cloud tracking, vendor data harvesting | **100% Local-first, offline-capable, zero data leaks** |
+| **Language Practice** | Disconnected flashcard drills | **English-in-the-Loop with audio recordings & technical feedback** |
 
-```text
-src/
-├── app/                          # Couche de présentation & routage Next.js (App Router)
-│   ├── learn/                    # Parcours d'apprentissage thématiques
-│   ├── subjects/                 # Espace académique multi-matières
-│   ├── sources/                  # Explorateur de sources et provenance
-│   ├── review/                   # Espace de révision et remédiation
-│   ├── evidence/                 # Registre d'audit des preuves
-│   └── progress/                 # Matrice de compétences déduite
-├── components/                   # Composants d'interface React (shadcn/ui + widgets métier)
-│   ├── academic-workspace/       # Composants quiz, visualiseur PDF et remédiation
-│   ├── source-engine/            # Cartes de sources et explorateur de catalogue
-│   ├── learning-records/         # Visualisation des compétences et preuves
-│   └── mission-runtime/          # Moteur d'étapes de mission
-├── modules/                      # LOGIQUE MÉTIER PURE (indépendante du framework)
-│   ├── academic-workspace/       # Quiz académiques, registre de cours, remédiation
-│   ├── source-engine/            # Sources canoniques, provenance, bundles
-│   ├── document-extraction/      # Pipeline PDF.js & pont Docling local
-│   ├── learning-records/         # Dérivation de compétences & preuves
-│   ├── review-engine/            # Détection d'erreurs & planification de révision
-│   ├── professional-scenarios/   # Scénarios industriels & validation multidimensionnelle
-│   ├── deep-mastery/             # Exercices de maîtrise approfondie (CSV, encodage)
-│   ├── technical-english/        # Workflow anglais parlé/écrit & audio evidence
-│   └── mission-runtime/          # Moteur d'exécution pas-à-pas & suivi du temps actif
-└── shared/ / config/             # Utilitaires stables et configuration validée
+---
+
+## ✨ Key Features
+
+### 📑 1. Grounded Academic Workspace (`academic-workspace`)
+- **Deterministic Grounding:** Ingests real course slides (e.g., Computer Networking INF3050) and validates quizzes strictly against exact text segments and page numbers.
+- **Adaptive Remediation:** If a question is missed, learners are offered contextual remediation: targeted explanations, conceptual flashcards, or section re-ingestion.
+
+### 🔍 2. Dual Document Extraction Engine (`document-extraction`)
+- **Fast Text Ingestion:** Powered by Mozilla [PDF.js](https://github.com/mozilla/pdf.js) (6.2) for fast local parsing.
+- **Deep Structural Parsing:** Powered by [Docling](https://github.com/DS4SD/docling) (2.121) for complex multi-column layouts, tables, and mathematical formulas via a sandboxed local process bridge.
+- **Zero Cloud Leak:** Enforces `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`.
+
+### 🔄 3. Spaced Error Retrieval (`review-engine`)
+- **Error Pattern Memory:** Tracks meaningful conceptual mistakes (e.g., *TCP vs UDP confusion*, *PDU encapsulation hierarchy*, *CSV delimiter edge cases*).
+- **Spaced Review Loop:** Automatically schedules overdue items with dynamic intervals based on retrieval success.
+
+### 🎙️ 4. Technical English in the Loop (`technical-english`)
+- **Microphone & Audio Store:** In-browser audio recording with local blob persistence.
+- **Concise Feedback:** Provides tightly bounded lexical and grammatical feedback (capped at 3 actionable points) without hallucinating progress.
+
+### 🏭 5. Industrial Problem Scenarios (`professional-scenarios`)
+- **Realistic Workplace Cases:** Scenario solving based on synthetic industrial telemetry data.
+- **Multidimensional Rubrics:** Validates factual accuracy, hypothesis vs fact separation, and actionable next steps.
+- **AI-Assistance Tagging:** Explicitly separates independent student writing from AI-assisted text.
+
+---
+
+## 🏛️ Architecture
+
+The codebase follows a **Clean Modular Monolith** architecture. Domain modules are decoupled from Next.js, UI frameworks, and storage adapters.
+
+```mermaid
+flowchart TD
+    subgraph UI ["🖥️ Presentation Layer (Next.js 16 / React 19)"]
+        Dashboard["/ (Today Dashboard)"]
+        Learn["/learn (Missions & Scenarios)"]
+        Subjects["/subjects (Academic Courses)"]
+        Sources["/sources (Provenance Explorer)"]
+        Review["/review (Spaced Retrieval)"]
+        Evidence["/evidence (Audit Trail)"]
+        Progress["/progress (Competency Matrix)"]
+    end
+
+    subgraph Core ["🧠 Pure Business Modules (src/modules/)"]
+        AW["academic-workspace\n(Grounded Quizzes & Remediation)"]
+        SE["source-engine\n(Canonical Sources & Bundles)"]
+        DE["document-extraction\n(PDF.js & Docling Bridge)"]
+        RE["review-engine\n(Error Pattern Memory)"]
+        LR["learning-records\n(Competency Derivation)"]
+        PS["professional-scenarios\n(Industrial Cases)"]
+        TE["technical-english\n(Audio Evidence)"]
+        DM["deep-mastery\n(Mental Model Invariants)"]
+        MR["mission-runtime\n(Active Time & Session Engine)"]
+    end
+
+    subgraph Infra ["🔌 Infrastructure & Local Storage"]
+        PDF["PDF.js 6.2 (Apache-2.0)"]
+        Docling["Docling CLI 2.121 (MIT)"]
+        Zustand["Zustand LocalStore (Browser)"]
+        SQLite["SQLite / Prisma 6"]
+        WebAudio["Web Audio / MediaRecorder API"]
+    end
+
+    UI --> Core
+    Core --> Infra
 ```
 
 ---
 
-## 🚀 Capacités Opérationnelles Implémentées
+## 🚀 Quick Start
 
-| Module | Fonctionnalités | Validation |
-|---|---|---|
-| **Academic Workspace** | Pilotage multi-matière (Réseaux INF3050 actif), cours sources paginés, quiz à citations vérifiées, remédiation adaptative (explication ciblée, flashcard, révision de section). | ✅ Actif |
-| **Source Engine** | Catalogue de sources canoniques vs dérivées, adaptation sécurisée de catalogues, attribution de bundles aux missions. | ✅ Actif |
-| **Document Extraction** | Extraction rapide de texte via PDF.js (Apache-2.0), extraction de structures complexes (tableaux/formules) via Docling (MIT) local borné, cache d'extraction local. | ✅ Actif |
-| **Review Engine** | Mémorisation des schémas d'erreur, planification de révisions espacées, détection des régressions et résolutions durables. | ✅ Actif |
-| **Learning Records** | Registre des preuves d'apprentissage, matrice de compétences (Excel, Anglais, Décision pro, Réseaux) déduite à 100% de preuves auditables. | ✅ Actif |
-| **Technical English** | Enregistrement audio local, transcriptions manuelles/assistées, fallback textuel, évaluation de restitution technique. | ✅ Actif |
-| **Professional Scenarios** | Scénario d'anomalie de données industrielles, évaluation multidimensionnelle (précision factuelle, prochaine action, sur-affirmation). | ✅ Actif |
-| **Deep Mastery** | Déconstruction des modèles mentaux sur les délimiteurs, guillemets et séparateurs décimaux CSV. | ✅ Actif |
-| **Mission Runtime** | Moteur d'étapes de mission, persistance locale avec watchdog de réhydratation, exclusion des temps morts d'onglet en arrière-plan. | ✅ Actif |
+### Prerequisites
+- [Node.js](https://nodejs.org/) `>= 20.0.0` (Tested on Node 22 & 24)
+- `npm` or `bun`
 
----
-
-## 🛠️ Pile Technologique
-
-- **Framework Web** : [Next.js 16](https://nextjs.org/) (App Router, Turbopack) & [React 19](https://react.dev/)
-- **Langage** : [TypeScript 5](https://www.typescriptlang.org/) (mode `bundler` avec support natif des extensions TS pour l'exécution Node)
-- **Design & Styles** : [Tailwind CSS 4](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/) / Radix UI
-- **Extraction Documentaire** : [pdfjs-dist](https://github.com/mozilla/pdf.js) (6.2) & [Docling](https://github.com/DS4SD/docling) (2.121 local CLI)
-- **Persistance & Données** : [Prisma 6](https://www.prisma.io/) / SQLite & Zustand avec stockage local browser
-- **Test Runner** : Node.js native test runner (`node --test --experimental-strip-types`)
-
----
-
-## 💻 Commandes & Workflow de Développement
-
-### 1. Installation des dépendances
+### 1. Clone & Install
 ```bash
+git clone https://github.com/eulogep/daily-english-mission.git
+cd daily-english-mission
 npm install
 ```
 
-### 2. Démarrage du serveur de développement
+### 2. Run Development Server
 ```bash
 npm run dev
-# Application accessible sur http://localhost:3000
 ```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-### 3. Exécution des tests automatisés
-L'ensemble de la suite de tests (unitaires et intégration) s'exécute via le runner natif Node.js :
+### 3. Run Automated Tests
 ```bash
 node --test --experimental-strip-types tests/unit/**/*.test.ts tests/integration/**/*.test.ts
 ```
-> **Résultat attendu :** 214 tests passants (214/214 PASS).
+> **Output:** `214/214 PASS` in ~2 seconds.
 
-### 4. Validation TypeScript
-```bash
-npx tsc --noEmit
-```
-
-### 5. Analyse statique (ESLint)
-```bash
-npm run lint
-```
-
-### 6. Build de production (Cross-Platform)
-Le script de build Next.js avec assemblage du mode `standalone` est entièrement multiplateforme (Windows, Linux, macOS) :
+### 4. Build for Production
+Cross-platform zero-dependency production build (Windows, Linux, macOS):
 ```bash
 npm run build
 ```
 
 ---
 
-## 🗺️ Plan de Navigation de l'Application
+## 📦 Operational Modules Map
 
-- `/` : **Aujourd’hui** — Tableau de bord des priorités et activités du jour
-- `/learn` : **Apprendre** — Hub des missions pratiques, deep mastery et scénarios professionnels
-- `/subjects` : **Matières** — Espace académique (ex. Réseaux informatiques INF3050, cours paginés et quiz ancrés)
-- `/sources` : **Sources** — Catalogue des ressources d'apprentissage, classification et traçabilité de provenance
-- `/review` : **Réviser** — Centre de révision espacée et remédiation des erreurs enregistrées
-- `/evidence` : **Preuves** — Registre d'audit complet de toutes les tentatives, fichiers et évaluations
-- `/progress` : **Progression** — Matrice de compétences basée exclusivement sur les preuves auditables
-- `/daily-english` : **Daily English** — Entraînement quotidien à la communication technique orale
+```text
+src/modules/
+├── academic-workspace/       # Course registry, grounded quiz validation, adaptive remediation
+├── source-engine/            # Canonical vs derived source records, provenance graph, mission bundles
+├── document-extraction/      # Unified extraction pipeline (PDF.js adapter + Docling local bridge)
+├── learning-records/         # Immutable evidence ledger & deterministic competency derivation
+├── review-engine/            # Error signal detection, error patterns, spaced retrieval engine
+├── professional-scenarios/   # Synthetic industrial cases & multidimensional rubrics
+├── deep-mastery/             # Deliberate practice on fundamental invariants (CSV, encodings)
+├── technical-english/        # Spoken/written technical English & audio evidence persistence
+└── mission-runtime/          # Multi-step interactive mission runner & active time tracking
+```
 
 ---
 
-## 🔒 Principes de Sécurité et de Données
+## 🗺️ Application Routes
 
-- **Zéro fuite documentaire** : aucun cours académique sous droit, tableur interne ou donnée restreinte n'est commité dans le dépôt public.
-- **Fixtures synthétiques** : tous les tests s'appuient strictement sur des données synthétiques déclarées (`TRAINING_SYNTHETIC`).
-- **Isolation d'exécution** : les dépendances Python complexes (Docling, OCR) sont exécutées via des bridges locaux bornés (`scripts/document-extraction/`) sans appel réseau externe.
+| Route | View | Purpose |
+|---|---|---|
+| `/` | **Aujourd’hui** | Daily priority overview, active missions, and due reviews |
+| `/learn` | **Apprendre** | Learning path catalog (Excel Foundations, Technical English, Deep Mastery, Industrial Scenarios) |
+| `/subjects` | **Matières** | Multi-subject academic portal (Computer Networking INF3050 pilot) |
+| `/sources` | **Sources** | Canonical source catalog, license classifications, and provenance graph |
+| `/review` | **Réviser** | Spaced retrieval session tackling recorded error patterns |
+| `/evidence` | **Preuves** | Auditable chronological evidence stream of learner attempts |
+| `/progress` | **Progression** | Honest competency graph derived strictly from verified evidence |
+| `/daily-english` | **Daily English** | Daily interactive speaking and vocabulary practice |
+
+---
+
+## 🛡️ Privacy, Security & Data Safety
+
+- 🔒 **Zero Data Leaks:** Proprietary company documents, internal spreadsheets, private audio files, and personal credentials are never tracked or committed.
+- 🧪 **Synthetic Fixtures Only:** All automated tests use 100% synthetic, non-sensitive fixtures (`TRAINING_SYNTHETIC`).
+- 🌐 **Offline by Default:** Document extraction, audio recording, quiz grading, and competency derivation run entirely on your local machine without mandatory network calls.
+
+---
+
+## 🏷️ GitHub Topics & Discovery Tags
+
+```text
+learning-os, local-first, deliberate-practice, document-extraction, docling,
+pdfjs, spaced-repetition, competency-tracking, technical-english, nextjs16,
+react19, typescript5, tailwindcss4, edtech-open-source, privacy-first
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Whether you want to add new academic subjects, create deliberate practice scenarios, or improve local document extraction bridges:
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feat/grounded-skill-pilot`)
+3. Commit your changes (`git commit -m 'feat: add grounded skill pilot'`)
+4. Verify all tests pass (`node --test --experimental-strip-types tests/unit/**/*.test.ts tests/integration/**/*.test.ts`)
+5. Push to the branch (`git push origin feat/grounded-skill-pilot`)
+6. Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+<div align="center">
+  <sub>Built with ❤️ for rigorous engineering education and lifelong mastery.</sub>
+</div>

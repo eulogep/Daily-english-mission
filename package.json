@@ -1,6 +1,21 @@
 {
-  "name": "nextjs_tailwind_shadcn_ts",
+  "name": "engineer-learning-os",
   "version": "0.2.0",
+  "description": "Evidence-grounded, local-first learning operating system for engineers. Deliberate practice, source-grounded academic quizzes, spaced retrieval, and audio technical English.",
+  "keywords": [
+    "learning-os",
+    "local-first",
+    "deliberate-practice",
+    "document-extraction",
+    "docling",
+    "pdfjs",
+    "nextjs16",
+    "react19",
+    "typescript",
+    "spaced-repetition",
+    "competency-tracking",
+    "technical-english"
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev --webpack -p 3000",
