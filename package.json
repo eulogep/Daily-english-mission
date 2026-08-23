@@ -16,6 +16,7 @@
     "competency-tracking",
     "technical-english"
   ],
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack -p 3000",
