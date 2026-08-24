@@ -148,7 +148,8 @@ export type RemediationMethodId =
   | "MNEMONIC"
   | "FLASHCARDS"
   | "SOURCE_REVIEW"
-  | "GUIDED_PRACTICE";
+  | "GUIDED_PRACTICE"
+  | "VISUAL_RECONSTRUCTION";
 
 export type RemediationMethod = {
   id: RemediationMethodId;
@@ -159,6 +160,7 @@ export type RemediationMethod = {
   generationMethod: "DETERMINISTIC_SOURCE_GROUNDED" | "PEDAGOGICAL_DERIVATION";
   requiresAI: false;
   evidencePolicy: "GUIDED_PRACTICE_ONLY";
+  route?: string;
 };
 
 export type AcademicRemediationRecord = {

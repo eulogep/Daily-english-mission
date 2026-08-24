@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BookOpen, Brain, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ACADEMIC_REMEDIATION_METHODS,
   recommendedRemediation,
+  remediationMethod,
   remediationSupport,
 } from "@/modules/academic-workspace/remediation";
 import type {
@@ -26,6 +29,7 @@ export function AcademicRemediationHub({
   onSelect: (methodId: RemediationMethodId) => void;
   onClose: () => void;
 }) {
+  const pathname = usePathname();
   const recommended = recommendedRemediation(
     question.conceptIds.includes("NETWORK_ENCAPSULATION")
       ? "SYSTEM_RELATIONSHIP_FAILURE"
@@ -33,6 +37,11 @@ export function AcademicRemediationHub({
   );
   const support = remediation.selectedMethod
     ? remediationSupport(remediation.selectedMethod, question)
+    : null;
+  const selectedRoute = remediation.selectedMethod ? remediationMethod(remediation.selectedMethod).route : undefined;
+  const originConcept = question.conceptIds.includes("NETWORK_ENCAPSULATION") ? "ENCAPSULATION_PDU_CONFUSION" : "OSI_LAYER_MISCLASSIFICATION";
+  const visualHref = selectedRoute
+    ? `${selectedRoute}?originFlow=ACADEMIC_REMEDIATION&originErrorPatternId=${encodeURIComponent(`error:OSI_TCP_IP_REASONING:INCOMPLETE_RESPONSE:${originConcept}`)}&returnTo=${encodeURIComponent(pathname ?? "/")}`
     : null;
 
   return (
@@ -67,7 +76,8 @@ export function AcademicRemediationHub({
               <p className="flex items-center gap-2 text-sm font-semibold"><Brain className="size-4 text-cyan-700" />Méthode pédagogique dérivée</p>
               <p className="mt-2 text-sm leading-6 text-slate-700">{support.pedagogicalSupport}</p>
             </div>
-            <Button onClick={onClose}>Fermer le support et me retester</Button>
+            {remediation.selectedMethod === "VISUAL_RECONSTRUCTION" && visualHref && <Button asChild><Link href={visualHref}>Ouvrir la reconstruction visuelle</Link></Button>}
+            <Button variant={remediation.selectedMethod === "VISUAL_RECONSTRUCTION" ? "outline" : "default"} onClick={onClose}>Fermer le support et me retester</Button>
           </div>
         ) : null}
         <p className="flex gap-2 text-xs text-slate-600"><ShieldCheck className="size-4 shrink-0 text-emerald-700" />Le support sera fermé avant la nouvelle variante de rappel.</p>

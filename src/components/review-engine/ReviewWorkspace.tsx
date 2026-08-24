@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLearningRecordStore } from "@/modules/learning-records/browser-store";
-import { reviewEvidenceFromResult, reviewIsTraceable, reviewStatusAt } from "@/modules/review-engine/core";
+import { reviewEvidenceFromResult, reviewIsTraceable, selectVisibleReviewItems } from "@/modules/review-engine/core";
 import { useReviewEngineStore } from "@/modules/review-engine/browser-store";
 import type { ReviewItem } from "@/modules/review-engine/types";
 
@@ -32,10 +32,10 @@ function ReviewCard({ item, onStart }: { item: ReviewItem; onStart?: () => void 
     <Card className="border-slate-200 bg-white shadow-sm">
       <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
         <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-800"><RotateCcw className="size-5" aria-hidden="true" /></span>
-        <div className="flex-1"><p className="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-700">Excel / Import CSV</p><h3 className="mt-1 font-semibold">{item.title}</h3><p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><Clock3 className="size-3.5" aria-hidden="true" />Environ 2 min</p></div>
-        <div className="flex flex-wrap gap-2"><Button variant="ghost" onClick={() => setWhyOpen((open) => !open)}>Pourquoi ?</Button>{onStart && <Button onClick={onStart}>Commencer</Button>}</div>
+        <div className="flex-1"><p className="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-700">{item.origin === "VISUAL_LEARNING" ? "Réseaux / Reconstruction visuelle" : "Excel / Import CSV"}</p><h3 className="mt-1 font-semibold">{item.title}</h3><p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><Clock3 className="size-3.5" aria-hidden="true" />Environ 2 min</p></div>
+        <div className="flex flex-wrap gap-2"><Button variant="ghost" onClick={() => setWhyOpen((open) => !open)}>Pourquoi ?</Button>{item.actionRoute ? <Button asChild><Link href={`${item.actionRoute}&review=${encodeURIComponent(item.id)}`}>Ouvrir la reconstruction</Link></Button> : onStart && <Button onClick={onStart}>Commencer</Button>}</div>
       </CardContent>
-      {whyOpen && <div className="border-t border-slate-100 px-5 py-4 text-sm text-slate-600"><p>{item.whyDue}</p><ul className="mt-2 list-disc space-y-1 pl-5">{related.map((pattern) => <li key={pattern.id}>{pattern.description}</li>)}</ul><p className="mt-3 flex items-center gap-2 text-xs font-medium text-emerald-800"><ShieldCheck className="size-4" />{traceable ? "Reliée à une preuve de ta mission Excel." : "Source indisponible — cette révision ne peut pas être lancée."}</p>{traceable && <Link href="/evidence" className="mt-2 inline-flex items-center gap-1 font-semibold text-emerald-800">Voir la preuve <ArrowRight className="size-3.5" /></Link>}</div>}
+      {whyOpen && <div className="border-t border-slate-100 px-5 py-4 text-sm text-slate-600"><p>{item.whyDue}</p><ul className="mt-2 list-disc space-y-1 pl-5">{related.map((pattern) => <li key={pattern.id}>{pattern.description}</li>)}</ul>{item.academicPageReferences?.map((reference) => <p key={`${reference.sourceId}:${reference.pageStart}:${reference.pageEnd}`} className="mt-2 text-xs">Source {reference.sourceId} · page {reference.pageStart}</p>)}<p className="mt-3 flex items-center gap-2 text-xs font-medium text-emerald-800"><ShieldCheck className="size-4" />{traceable ? `Reliée à une preuve de ${item.origin === "VISUAL_LEARNING" ? "ta reconstruction visuelle" : "ta mission Excel"}.` : "Source indisponible — cette révision ne peut pas être lancée."}</p>{traceable && <Link href="/evidence" className="mt-2 inline-flex items-center gap-1 font-semibold text-emerald-800">Voir la preuve <ArrowRight className="size-3.5" /></Link>}</div>}
     </Card>
   );
 }
@@ -81,16 +81,15 @@ export function ReviewWorkspace() {
   const evidence = useLearningRecordStore((state) => state.evidence);
   const now = Date.now();
   if (!hydrated) return <p className="text-sm text-slate-500">Chargement des révisions locales…</p>;
-  const validItems = reviewItems.filter((item) => reviewIsTraceable(item, patterns, evidence));
-  const due = validItems.filter((item) => reviewStatusAt(item, now) === "DUE");
-  const upcoming = validItems.filter((item) => reviewStatusAt(item, now) === "UPCOMING");
+  const { due, upcoming } = selectVisibleReviewItems(reviewItems, patterns, evidence, now);
+  const validItems = [...due, ...upcoming];
   const completedToday = results.filter((result) => sameLocalDay(result.completedAt, now));
-  const active = validItems.find((item) => item.id === activeItemId);
+  const active = validItems.find((item) => item.id === activeItemId && !item.actionRoute);
   if (active) return <ActiveReview item={active} queuePosition={Math.max(1, due.findIndex((item) => item.id === active.id) + 1)} queueSize={Math.max(1, due.length)} />;
 
   return (
     <div className="space-y-8">
-      <header className="space-y-3"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Révisions fondées sur tes preuves</p><h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Renforce ce qui a réellement posé problème</h1><p className="max-w-2xl leading-7 text-slate-600">Une courte tentative avant le feedback, sans score global ni urgence artificielle.</p>{due.length > 0 && <Button size="lg" onClick={() => startReview(due[0].id)}>Commencer la révision <ArrowRight /></Button>}</header>
+      <header className="space-y-3"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Révisions fondées sur tes preuves</p><h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Renforce ce qui a réellement posé problème</h1><p className="max-w-2xl leading-7 text-slate-600">Une courte tentative avant le feedback, sans score global ni urgence artificielle.</p>{due.length > 0 && (due[0].actionRoute ? <Button size="lg" asChild><Link href={`${due[0].actionRoute}&review=${encodeURIComponent(due[0].id)}`}>Ouvrir la révision visuelle <ArrowRight /></Link></Button> : <Button size="lg" onClick={() => startReview(due[0].id)}>Commencer la révision <ArrowRight /></Button>)}</header>
       <section aria-labelledby="due-title" className="space-y-4"><div className="flex items-center justify-between"><h2 id="due-title" className="text-xl font-semibold">Révisions dues</h2><Badge>{due.length}</Badge></div>{due.length ? <div className="grid gap-4">{due.map((item) => <ReviewCard key={item.id} item={item} onStart={() => startReview(item.id)} />)}</div> : <Card><CardContent className="p-6 text-sm text-slate-600">Aucune révision due. Les prochaines apparaîtront uniquement à partir de preuves réelles.</CardContent></Card>}</section>
       <section aria-labelledby="upcoming-title" className="space-y-4"><h2 id="upcoming-title" className="text-xl font-semibold">À venir</h2>{upcoming.length ? <div className="grid gap-3">{upcoming.map((item) => <div key={item.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3"><p className="font-medium">{item.title}</p><p className="mt-1 text-sm text-slate-500">Prochaine révision : {formatDate(item.nextReviewAt)}</p></div>)}</div> : <p className="text-sm text-slate-500">Aucune révision à venir.</p>}</section>
       <section aria-labelledby="completed-title" className="space-y-3"><h2 id="completed-title" className="text-xl font-semibold">Terminées aujourd’hui</h2><p className="text-sm text-slate-600">{completedToday.length ? `${completedToday.length} révision(s) terminée(s) aujourd’hui.` : "Aucune révision terminée aujourd’hui."}</p></section>

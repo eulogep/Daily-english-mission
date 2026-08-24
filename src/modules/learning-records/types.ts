@@ -18,7 +18,7 @@ export type CompetencyId =
   | "NETWORK_FUNDAMENTALS"
   | "OSI_TCP_IP_REASONING";
 export type VerificationStatus = "PENDING" | "VALID" | "INVALID" | "UNVERIFIED";
-export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT" | "AUDIO_RESPONSE" | "TEXT_RESPONSE" | "DEEP_MASTERY_SESSION" | "PROFESSIONAL_SCENARIO" | "ACADEMIC_QUIZ";
+export type EvidenceType = "MISSION_ATTEMPT" | "MISSION_COMPLETION" | "REVIEW_RESULT" | "AUDIO_RESPONSE" | "TEXT_RESPONSE" | "DEEP_MASTERY_SESSION" | "PROFESSIONAL_SCENARIO" | "ACADEMIC_QUIZ" | "GUIDED_VISUAL_PRACTICE";
 export type ProfessionalEvaluationDimension =
   | "FACTUAL_ACCURACY"
   | "PROBLEM_IDENTIFICATION"
@@ -79,6 +79,15 @@ export type EvidenceEvaluation = {
   academicConceptIds?: string[];
   academicPageReferences?: Array<{ sourceId: string; pageStart: number; pageEnd: number }>;
   academicGroundingStatus?: "VERIFIED" | "INVALID";
+  visualTaskId?: string;
+  visualAttempts?: number;
+  visualOrderErrors?: string[];
+  visualClassificationErrors?: string[];
+  visualFinalResult?: "CORRECT" | "NOT_YET_CORRECT";
+  visualAssistanceLevel?: "GUIDED";
+  visualOriginFlow?: string;
+  visualOriginErrorPatternId?: string;
+  visualRemediationMethod?: "VISUAL_RECONSTRUCTION";
   academicRemediations?: Array<{
     questionId: string;
     sourceId: string;

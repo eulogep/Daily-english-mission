@@ -10,6 +10,13 @@ function unique(values: string[]) {
   return [...new Set(values)];
 }
 
+function uniquePageReferences(values: NonNullable<ErrorSignal["academicPageReferences"]>) {
+  return [...new Map(values.map((reference) => [
+    `${reference.sourceId}:${reference.pageStart}:${reference.pageEnd}`,
+    reference,
+  ])).values()];
+}
+
 function signal(attempt: MissionAttempt, sourceEvidenceId: string, errorType: ErrorSignal["errorType"], concept: ReviewConcept, description: string, severity: ErrorSignal["severity"], observedAt: number): ErrorSignal {
   return {
     id: `${attempt.id}:${errorType}:${concept}`,
@@ -87,6 +94,10 @@ export function mergeErrorPatterns(existing: ErrorPattern[], signals: ErrorSigna
           academicSourceIds: current.academicSourceId ? [current.academicSourceId] : [],
           academicSectionIds: current.academicSectionId ? [current.academicSectionId] : [],
           remediationMethods: current.remediationMethod ? [current.remediationMethod] : [],
+          originErrorPatternIds: current.originErrorPatternId ? [current.originErrorPatternId] : [],
+          visualAttemptCount: current.visualAttemptCount ?? 0,
+          visualHintUsage: current.visualHintUsage ?? 0,
+          academicPageReferences: uniquePageReferences(current.academicPageReferences ?? []),
         },
         sourceClassification: "PERSONAL",
       });
@@ -100,6 +111,10 @@ export function mergeErrorPatterns(existing: ErrorPattern[], signals: ErrorSigna
           academicSourceIds: unique([...(prior.metadata.academicSourceIds ?? []), ...(current.academicSourceId ? [current.academicSourceId] : [])]),
           academicSectionIds: unique([...(prior.metadata.academicSectionIds ?? []), ...(current.academicSectionId ? [current.academicSectionId] : [])]),
           remediationMethods: unique([...(prior.metadata.remediationMethods ?? []), ...(current.remediationMethod ? [current.remediationMethod] : [])]),
+          originErrorPatternIds: unique([...(prior.metadata.originErrorPatternIds ?? []), ...(current.originErrorPatternId ? [current.originErrorPatternId] : [])]),
+          visualAttemptCount: Math.max(prior.metadata.visualAttemptCount ?? 0, current.visualAttemptCount ?? 0),
+          visualHintUsage: Math.max(prior.metadata.visualHintUsage ?? 0, current.visualHintUsage ?? 0),
+          academicPageReferences: uniquePageReferences([...(prior.metadata.academicPageReferences ?? []), ...(current.academicPageReferences ?? [])]),
         },
       });
       continue;
@@ -119,6 +134,10 @@ export function mergeErrorPatterns(existing: ErrorPattern[], signals: ErrorSigna
         academicSourceIds: unique([...(prior.metadata.academicSourceIds ?? []), ...(current.academicSourceId ? [current.academicSourceId] : [])]),
         academicSectionIds: unique([...(prior.metadata.academicSectionIds ?? []), ...(current.academicSectionId ? [current.academicSectionId] : [])]),
         remediationMethods: unique([...(prior.metadata.remediationMethods ?? []), ...(current.remediationMethod ? [current.remediationMethod] : [])]),
+        originErrorPatternIds: unique([...(prior.metadata.originErrorPatternIds ?? []), ...(current.originErrorPatternId ? [current.originErrorPatternId] : [])]),
+        visualAttemptCount: Math.max(prior.metadata.visualAttemptCount ?? 0, current.visualAttemptCount ?? 0),
+        visualHintUsage: Math.max(prior.metadata.visualHintUsage ?? 0, current.visualHintUsage ?? 0),
+        academicPageReferences: uniquePageReferences([...(prior.metadata.academicPageReferences ?? []), ...(current.academicPageReferences ?? [])]),
       },
     });
   }
@@ -137,6 +156,40 @@ function template(concept: ReviewConcept) {
       hint: "La page 20 place cette unité après le datagramme ou paquet.",
       successFeedback: "Exact. La couche liaison manipule la trame dans le schéma étudié.",
       retryFeedback: "Reconstitue l’ordre message, segment, datagramme ou paquet, puis trame.",
+    };
+  }
+  if (concept === "OSI_LAYER_ORDER_CONFUSION") {
+    return {
+      reviewType: "VISUAL_ORDER_RECONSTRUCTION" as const,
+      title: "Reconstituer l’ordre des couches OSI",
+      prompt: "Replace les sept couches OSI dans l’ordre, de la couche Application à la couche Physique.",
+      choices: [{ id: "application", label: "Application" }, { id: "transport", label: "Transport" }, { id: "physical", label: "Physique" }],
+      expectedResponse: "application",
+      acceptedKeywords: ["application", "couche 7"],
+      hint: "Pars de la couche la plus proche de l’utilisateur.",
+      successFeedback: "Exact. Application est la couche supérieure du modèle OSI.",
+      retryFeedback: "Repars de l’ordre 7 vers 1 et identifie la couche la plus proche de l’utilisateur.",
+      origin: "VISUAL_LEARNING" as const,
+      actionRoute: "/learn/visual-lab?task=OSI_TCPIP_RECONSTRUCTION&focus=order",
+    };
+  }
+  if (concept === "OSI_TCPIP_MAPPING_CONFUSION") {
+    return {
+      reviewType: "VISUAL_MAPPING_RECONSTRUCTION" as const,
+      title: "Associer OSI et TCP/IP",
+      prompt: "Associe chaque couche OSI à la couche TCP/IP correspondante.",
+      choices: [
+        { id: "application", label: "Application TCP/IP" },
+        { id: "transport", label: "Transport TCP/IP" },
+        { id: "network", label: "Réseau TCP/IP" },
+      ],
+      expectedResponse: "application",
+      acceptedKeywords: ["application", "application tcp/ip"],
+      hint: "Les trois couches OSI supérieures sont regroupées.",
+      successFeedback: "Exact. Présentation est regroupée dans la couche Application de TCP/IP.",
+      retryFeedback: "Observe le regroupement des couches Application, Présentation et Session.",
+      origin: "VISUAL_LEARNING" as const,
+      actionRoute: "/learn/visual-lab?task=OSI_TCPIP_RECONSTRUCTION&focus=mapping",
     };
   }
   if (concept === "OSI_LAYER_MISCLASSIFICATION") {
@@ -282,8 +335,12 @@ export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPatte
     const academicSourceIds = unique(conceptPatterns.flatMap((pattern) => pattern.metadata.academicSourceIds ?? []));
     const academicSectionIds = unique(conceptPatterns.flatMap((pattern) => pattern.metadata.academicSectionIds ?? []));
     const remediationMethods = unique(conceptPatterns.flatMap((pattern) => pattern.metadata.remediationMethods ?? []));
+    const academicPageReferences = uniquePageReferences(conceptPatterns.flatMap((pattern) => pattern.metadata.academicPageReferences ?? []));
+    const content = template(concept);
+    const visualWhyDue = content.origin === "VISUAL_LEARNING"
+      ? "À revoir maintenant car une difficulté a été observée dans ta reconstruction visuelle."
+      : null;
     if (!prior) {
-      const content = template(concept);
       byId.set(id, {
         id,
         competencyId,
@@ -300,14 +357,15 @@ export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPatte
         successCount: 0,
         lastReviewedAt: null,
         nextReviewAt: now,
-        whyDue: competencyId === "EXCEL_CSV_IMPORT"
+        whyDue: visualWhyDue ?? (competencyId === "EXCEL_CSV_IMPORT"
           ? "À revoir maintenant car une difficulté a été observée dans ta mission Excel."
           : competencyId === "NETWORK_FUNDAMENTALS" || competencyId === "OSI_TCP_IP_REASONING"
           ? "À revoir maintenant car une difficulté a été observée dans ton quiz de réseau."
-          : "À revoir maintenant car une difficulté a été observée dans ton scénario professionnel.",
+          : "À revoir maintenant car une difficulté a été observée dans ton scénario professionnel."),
         academicSourceIds,
         academicSectionIds,
         remediationMethods,
+        academicPageReferences,
         sourceClassification: "PERSONAL",
       });
       continue;
@@ -315,12 +373,15 @@ export function generateReviewItems(existing: ReviewItem[], patterns: ErrorPatte
     const hasNewSource = sourceEvidenceIds.some((sourceId) => !prior.sourceEvidenceIds.includes(sourceId));
     byId.set(id, {
       ...prior,
+      ...content,
+      ...(visualWhyDue ? { whyDue: visualWhyDue } : {}),
       errorPatternIds: unique([...prior.errorPatternIds, ...errorPatternIds]),
       sourceEvidenceIds: unique([...prior.sourceEvidenceIds, ...sourceEvidenceIds]),
       academicSourceIds: unique([...(prior.academicSourceIds ?? []), ...academicSourceIds]),
       academicSectionIds: unique([...(prior.academicSectionIds ?? []), ...academicSectionIds]),
       remediationMethods: unique([...(prior.remediationMethods ?? []), ...remediationMethods]),
-      ...(hasNewSource ? { dueAt: Math.min(prior.dueAt, now), nextReviewAt: Math.min(prior.nextReviewAt, now), status: "DUE" as const, whyDue: "À revoir maintenant car une nouvelle difficulté a été observée." } : {}),
+      academicPageReferences: uniquePageReferences([...(prior.academicPageReferences ?? []), ...academicPageReferences]),
+      ...(hasNewSource ? { dueAt: Math.min(prior.dueAt, now), nextReviewAt: Math.min(prior.nextReviewAt, now), status: "DUE" as const, whyDue: visualWhyDue ?? "À revoir maintenant car une nouvelle difficulté a été observée." } : {}),
     });
   }
   return [...byId.values()].sort((left, right) => left.dueAt - right.dueAt);
@@ -351,6 +412,19 @@ export function reviewIsTraceable(item: ReviewItem, patterns: ErrorPattern[], ev
 
 export function countDueReviews(items: ReviewItem[], patterns: ErrorPattern[], evidence: EvidenceRecord[], now: number) {
   return items.filter((item) => reviewStatusAt(item, now) === "DUE" && reviewIsTraceable(item, patterns, evidence)).length;
+}
+
+export function selectVisibleReviewItems(
+  items: ReviewItem[],
+  patterns: ErrorPattern[],
+  evidence: EvidenceRecord[],
+  now: number,
+) {
+  const visible = items.filter((item) => reviewIsTraceable(item, patterns, evidence) && reviewStatusAt(item, now) !== "SUSPENDED");
+  return {
+    due: visible.filter((item) => reviewStatusAt(item, now) === "DUE"),
+    upcoming: visible.filter((item) => reviewStatusAt(item, now) === "UPCOMING"),
+  };
 }
 
 export function applyReviewResult(item: ReviewItem, patterns: ErrorPattern[], result: ReviewResultRecord) {

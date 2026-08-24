@@ -16,6 +16,7 @@ const method = (
   label: string,
   purpose: string,
   generationMethod: RemediationMethod["generationMethod"] = "DETERMINISTIC_SOURCE_GROUNDED",
+  route?: string,
 ): RemediationMethod => ({
   id,
   label,
@@ -25,6 +26,7 @@ const method = (
   generationMethod,
   requiresAI: false,
   evidencePolicy: "GUIDED_PRACTICE_ONLY",
+  route,
 });
 
 export const ACADEMIC_REMEDIATION_METHODS: RemediationMethod[] = [
@@ -37,6 +39,7 @@ export const ACADEMIC_REMEDIATION_METHODS: RemediationMethod[] = [
   method("FLASHCARDS", "Flashcards", "Transformer les associations couche-unité en rappel actif.", "PEDAGOGICAL_DERIVATION"),
   method("SOURCE_REVIEW", "Revoir le passage du cours", "Retourner au passage canonique cité."),
   method("GUIDED_PRACTICE", "Mini-exercice guidé", "Reconstruire l’enchaînement avec une aide progressive."),
+  method("VISUAL_RECONSTRUCTION", "Reconstruction visuelle", "Réordonner les couches et leurs correspondances dans le laboratoire visuel.", "PEDAGOGICAL_DERIVATION", "/learn/visual-lab"),
 ];
 
 export type AcademicErrorKind =
@@ -48,10 +51,10 @@ export type AcademicErrorKind =
   | "REPEATED_MEMORY_FAILURE";
 
 export function recommendedRemediation(errorKind: AcademicErrorKind): RemediationMethodId[] {
-  if (errorKind === "ORDER_SEQUENCE") return ["MIND_MAP", "MNEMONIC", "FLASHCARDS"];
+  if (errorKind === "ORDER_SEQUENCE") return ["VISUAL_RECONSTRUCTION", "MIND_MAP", "MNEMONIC"];
   if (errorKind === "CONCEPT_CONFUSION") return ["ANALOGY", "WORKED_EXAMPLE", "MIND_MAP"];
   if (errorKind === "DEFINITION_FAILURE") return ["SIMPLE_EXPLANATION", "FLASHCARDS", "FEYNMAN"];
-  if (errorKind === "SYSTEM_RELATIONSHIP_FAILURE") return ["MIND_MAP", "ANALOGY", "GUIDED_PRACTICE"];
+  if (errorKind === "SYSTEM_RELATIONSHIP_FAILURE") return ["MIND_MAP", "VISUAL_RECONSTRUCTION", "GUIDED_PRACTICE"];
   if (errorKind === "APPLICATION_FAILURE") return ["WORKED_EXAMPLE", "GUIDED_PRACTICE", "FEYNMAN"];
   return ["FLASHCARDS", "MNEMONIC", "SOURCE_REVIEW"];
 }
@@ -83,7 +86,9 @@ export function remediationSupport(methodId: RemediationMethodId, question: Acad
         "Pages 17–19 : le cours distingue application, transport, réseau, liaison et physique.",
         "La page 18 associe TCP et UDP au transport, et IP à la couche réseau.",
       ];
-  const derived = methodId === "ANALOGY"
+  const derived = methodId === "VISUAL_RECONSTRUCTION"
+    ? "Reconstruction visuelle : réordonne les couches OSI et associe-les à la pile TCP/IP, puis reviens au rappel actif."
+    : methodId === "ANALOGY"
     ? "Analogie pédagogique : imagine des enveloppes imbriquées. Chaque enveloppe ajoute les informations nécessaires à une étape; cette image n’est pas une formulation littérale du cours."
     : methodId === "MIND_MAP"
     ? encapsulation

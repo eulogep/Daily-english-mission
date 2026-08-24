@@ -37,10 +37,12 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
   const isDeepMastery = record.evidenceType === "DEEP_MASTERY_SESSION";
   const isProfessionalScenario = record.evidenceType === "PROFESSIONAL_SCENARIO";
   const isAcademicQuiz = record.evidenceType === "ACADEMIC_QUIZ";
+  const isVisualPractice = record.evidenceType === "GUIDED_VISUAL_PRACTICE";
   const deepMasteryCompleted = isDeepMastery && record.evaluationResult.missionCompletion === "VALID";
   const professionalCompleted = isProfessionalScenario && record.evaluationResult.missionCompletion === "VALID";
   const academicCompleted = isAcademicQuiz && record.evaluationResult.missionCompletion === "VALID";
-  const completed = record.evidenceType === "MISSION_COMPLETION" || deepMasteryCompleted || professionalCompleted || academicCompleted;
+  const visualCompleted = isVisualPractice && record.evaluationResult.missionCompletion === "VALID";
+  const completed = record.evidenceType === "MISSION_COMPLETION" || deepMasteryCompleted || professionalCompleted || academicCompleted || visualCompleted;
   const reviewResult = record.evidenceType === "REVIEW_RESULT";
   const reviewCorrect = record.evaluationResult.outcome === "REVIEW_SUCCESS";
   const transcriptAvailable = record.evaluationResult.transcriptionStatus === "MANUAL_AVAILABLE";
@@ -56,7 +58,9 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
     if (next) viewed(record.id);
   }
 
-  const eyebrow = isAcademicQuiz
+  const eyebrow = isVisualPractice
+    ? "Pratique visuelle — OSI / TCP-IP"
+    : isAcademicQuiz
     ? "Quiz académique — Réseaux"
     : isProfessionalScenario
     ? "Scénario professionnel — Anomalie industrielle"
@@ -65,7 +69,9 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
     : isTechnicalEnglish
     ? "Technical English"
     : reviewResult ? "Révision Excel — Import CSV" : "Excel CSV Foundations — Niveau 1";
-  const title = isAcademicQuiz
+  const title = isVisualPractice
+    ? visualCompleted ? "Reconstruction visuelle terminée" : "Reconstruction visuelle en cours"
+    : isAcademicQuiz
     ? academicCompleted ? "Quiz réseau terminé" : "Quiz réseau commencé"
     : isProfessionalScenario
     ? professionalCompleted ? "Situation professionnelle traitée" : "Situation professionnelle commencée"
@@ -74,7 +80,9 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
     : isTechnicalEnglish
     ? "Explication du diagnostic CSV"
     : reviewResult ? "Révision terminée" : completed ? "Mission terminée" : "Tentative en cours";
-  const badge = isAcademicQuiz
+  const badge = isVisualPractice
+    ? visualCompleted ? "Pratique visuelle guidée validée" : "Reconstruction à terminer"
+    : isAcademicQuiz
     ? academicCompleted ? "Pratique académique validée" : "Quiz en cours"
     : isProfessionalScenario
     ? professionalCompleted ? "Pratique professionnelle validée" : "Analyse en cours"
@@ -98,10 +106,19 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
       <CardContent className="space-y-5">
         <div>
           <p className="text-sm font-semibold">Compétence</p>
-          <p className="mt-1 text-sm text-slate-600">{isAcademicQuiz ? "Fondamentaux réseau et raisonnement OSI/TCP-IP" : isProfessionalScenario ? "Analyse et communication professionnelles" : isTechnicalEnglish ? "Explication technique en anglais" : "Import CSV dans Excel"}</p>
+          <p className="mt-1 text-sm text-slate-600">{isVisualPractice ? "Raisonnement OSI et correspondance TCP/IP" : isAcademicQuiz ? "Fondamentaux réseau et raisonnement OSI/TCP-IP" : isProfessionalScenario ? "Analyse et communication professionnelles" : isTechnicalEnglish ? "Explication technique en anglais" : "Import CSV dans Excel"}</p>
         </div>
 
-        {isAcademicQuiz ? (
+        {isVisualPractice ? (
+          <ul className="space-y-2 text-sm text-slate-700">
+            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />Résultat : {record.evaluationResult.visualFinalResult === "CORRECT" ? "reconstruction correcte" : "à terminer"}</li>
+            <li className="flex gap-2"><Info className="mt-0.5 size-4 shrink-0 text-cyan-700" />Difficulté initiale — ordre : {record.evaluationResult.visualOrderErrors?.length ?? 0} signal(s) · correspondance : {record.evaluationResult.visualClassificationErrors?.length ?? 0} signal(s)</li>
+            <li className="flex gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" />Preuve guidée plafonnée à Pratiquée; aucune promotion autonome.</li>
+            {uniqueAcademicPageReferences(record).map((reference) => <li key={`${reference.sourceId}:${reference.pageStart}:${reference.pageEnd}`} className="flex gap-2"><BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700" />{reference.sourceId} — page {reference.pageStart}</li>)}
+            {record.evaluationResult.visualOriginFlow && <li className="flex gap-2"><Info className="mt-0.5 size-4 shrink-0 text-cyan-700" />Remédiation : {record.evaluationResult.visualRemediationMethod?.replaceAll("_", " ").toLocaleLowerCase("fr-FR")} · origine conservée</li>}
+            <li><Button variant="outline" size="sm" asChild><Link href="/learn/visual-lab">Revoir la reconstruction</Link></Button></li>
+          </ul>
+        ) : isAcademicQuiz ? (
           <ul className="space-y-2 text-sm text-slate-700">
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />Quiz relié à {record.evaluationResult.academicSourceIds?.length ?? 0} source(s), {record.evaluationResult.academicSectionIds?.length ?? 0} section(s) et {record.evaluationResult.academicConceptIds?.length ?? 0} concept(s).</li>
             {uniqueAcademicPageReferences(record).map((reference) => <li key={`${reference.sourceId}:${reference.pageStart}:${reference.pageEnd}`} className="flex gap-2"><BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700" />{reference.sourceId} — pages {reference.pageStart}–{reference.pageEnd}</li>)}
@@ -156,7 +173,12 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
         <Button variant="outline" onClick={toggle}>{open ? "Masquer les détails" : "Voir la preuve"}</Button>
         {open && (
           <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
-            {isTechnicalEnglish ? (
+            {isVisualPractice ? (
+              <>
+                <p><strong>Essais :</strong> {record.evaluationResult.visualAttempts ?? 0}</p>
+                <p className="mt-2"><strong>Provenance :</strong> {record.evaluationResult.academicSourceIds?.join(", ")} · section {record.evaluationResult.academicSectionIds?.join(", ")} · page 17</p>
+              </>
+            ) : isTechnicalEnglish ? (
               <>
                 <p><strong>Stockage :</strong> local sur cet appareil</p>
                 {record.artifactReference?.durationMs !== undefined && <p className="mt-2"><strong>Durée audio :</strong> {Math.max(1, Math.round(record.artifactReference.durationMs / 1000))} seconde(s)</p>}
@@ -193,7 +215,7 @@ const competencyPresentation: Record<CompetencyId, { subject: string; title: str
   PROFESSIONAL_STATUS_UPDATE: { subject: "Communication professionnelle", title: "Rédiger un point de situation", evidenceLabel: "Scénario professionnel industriel" },
   ACTIONABLE_NEXT_STEP: { subject: "Décision professionnelle", title: "Proposer une prochaine action", evidenceLabel: "Scénario professionnel industriel" },
   NETWORK_FUNDAMENTALS: { subject: "Réseaux", title: "Fondamentaux des protocoles réseau", evidenceLabel: "Quiz académique réseau" },
-  OSI_TCP_IP_REASONING: { subject: "Réseaux", title: "Raisonner avec OSI et TCP/IP", evidenceLabel: "Quiz académique réseau" },
+  OSI_TCP_IP_REASONING: { subject: "Réseaux", title: "Raisonner avec OSI et TCP/IP", evidenceLabel: "Activité académique réseau" },
 };
 
 function CompetencyCard({ competency, supporting }: { competency: Pick<CompetencyRecord, "competencyId" | "status" | "supportingEvidenceIds" | "rationale">; supporting: EvidenceRecord[] }) {

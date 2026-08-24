@@ -22,11 +22,20 @@ export type ReviewConcept =
   | "TCP_UDP_CONFUSION"
   | "ENCAPSULATION_PDU_CONFUSION"
   | "OSI_LAYER_ORDER_CONFUSION"
+  | "OSI_TCPIP_MAPPING_CONFUSION"
   | "TCP_IP_LAYER_RESPONSIBILITY_CONFUSION";
 export type ErrorSeverity = "LOW" | "MEDIUM" | "HIGH";
 export type ErrorResolutionStatus = "ACTIVE" | "IMPROVING" | "RESOLVED";
 export type ReviewStatus = "DUE" | "UPCOMING" | "COMPLETED" | "SUSPENDED";
-export type ReviewType = "MULTIPLE_CHOICE" | "SHORT_TEXT" | "QUICK_DIAGNOSTIC" | "CONFIDENCE_RESPONSE";
+export type ReviewType =
+  | "MULTIPLE_CHOICE"
+  | "SHORT_TEXT"
+  | "QUICK_DIAGNOSTIC"
+  | "CONFIDENCE_RESPONSE"
+  | "VISUAL_ORDER_RECONSTRUCTION"
+  | "VISUAL_MAPPING_RECONSTRUCTION";
+
+export type AcademicPageReference = { sourceId: string; pageStart: number; pageEnd: number };
 
 export type ErrorSignal = {
   id: string;
@@ -43,6 +52,10 @@ export type ErrorSignal = {
   academicSectionId?: string;
   remediationUsed?: boolean;
   remediationMethod?: string | null;
+  originErrorPatternId?: string;
+  visualAttemptCount?: number;
+  visualHintUsage?: number;
+  academicPageReferences?: AcademicPageReference[];
 };
 
 export type ErrorPattern = {
@@ -66,6 +79,10 @@ export type ErrorPattern = {
     academicSourceIds?: string[];
     academicSectionIds?: string[];
     remediationMethods?: string[];
+    originErrorPatternIds?: string[];
+    visualAttemptCount?: number;
+    visualHintUsage?: number;
+    academicPageReferences?: AcademicPageReference[];
   };
   sourceClassification: "PERSONAL";
 };
@@ -100,6 +117,9 @@ export type ReviewItem = {
   academicSourceIds?: string[];
   academicSectionIds?: string[];
   remediationMethods?: string[];
+  origin?: "VISUAL_LEARNING";
+  actionRoute?: string;
+  academicPageReferences?: AcademicPageReference[];
   sourceClassification: "PERSONAL";
 };
 
